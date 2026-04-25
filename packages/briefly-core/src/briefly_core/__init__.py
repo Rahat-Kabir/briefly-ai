@@ -1,0 +1,45 @@
+"""Core library for Briefly."""
+
+from .config import LoadedConfig, load_config, normalize_config, parse_config_text, resolve_config_path
+from .flags import (
+    BRIEF_LENGTHS,
+    BriefLength,
+    LengthArg,
+    parse_duration_ms,
+    parse_extract_format,
+    parse_firecrawl_mode,
+    parse_length_arg,
+    parse_markdown_mode,
+    parse_max_extract_characters,
+    parse_max_output_tokens,
+    parse_metrics_mode,
+    parse_preprocess_mode,
+    parse_retries,
+    parse_stream_mode,
+    parse_video_mode,
+    parse_youtube_mode,
+)
+
+__all__ = [
+    "LoadedConfig",
+    "BRIEF_LENGTHS",
+    "BriefLength",
+    "LengthArg",
+    "load_config",
+    "normalize_config",
+    "parse_config_text",
+    "parse_duration_ms",
+    "parse_extract_format",
+    "parse_firecrawl_mode",
+    "parse_length_arg",
+    "parse_markdown_mode",
+    "parse_max_extract_characters",
+    "parse_max_output_tokens",
+    "parse_metrics_mode",
+    "parse_preprocess_mode",
+    "parse_retries",
+    "parse_stream_mode",
+    "parse_video_mode",
+    "parse_youtube_mode",
+    "resolve_config_path",
+]
