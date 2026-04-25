@@ -2,11 +2,19 @@
 
 Use `uv` from the repo root.
 
-On this Windows machine, use a workspace-local uv cache:
+Default commands:
 
 ```powershell
-$env:UV_CACHE_DIR='.uv-cache'; uv run pytest
-$env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
+uv run pytest
+uv run ruff check
+```
+
+On some Windows setups, uv's default cache or hardlink behavior may fail with
+permission errors. If that happens, set these once in the shell:
+
+```powershell
+$env:UV_CACHE_DIR='.uv-cache'
+$env:UV_LINK_MODE='copy'
 ```
 
 Current expected baseline:
