@@ -65,6 +65,9 @@ input/output limits.
 Current behavior:
 
 - Literal text, file text, and stdin can build briefing requests.
+- Length presets add concrete prompt instructions and default output token caps.
+- `--format text` asks for plain text without Markdown formatting.
+- `--format markdown` allows Markdown output.
 - Empty text is rejected.
 - URL briefing fails clearly until URL extraction exists.
 
@@ -76,7 +79,8 @@ Briefly uses LiteLLM for real briefing calls. The CLI requires an explicit
 Current behavior:
 
 - Text, file, and stdin briefing can call a real model.
-- `--max-tokens` forwards to LiteLLM as `max_tokens`.
+- `--max-tokens` forwards to LiteLLM as `max_tokens` and overrides length
+  preset defaults.
 - Missing model fails with a clear error.
 - Streaming, retries, provider presets, and cost reporting are deferred.
 

@@ -64,6 +64,23 @@ def test_litellm_client_forwards_request(monkeypatch: pytest.MonkeyPatch) -> Non
     assert "Brief this." in calls[0]["messages"][0]["content"]
 
 
+def test_litellm_client_forwards_default_token_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+
+    async def fake_acompletion(**kwargs):
+        calls.append(kwargs)
+        return {"model": "provider/model", "choices": [{"message": {"content": "Brief."}}]}
+
+    import litellm
+
+    monkeypatch.setattr(litellm, "acompletion", fake_acompletion)
+
+    result = asyncio.run(LiteLlmBriefingClient().generate(_request()))
+
+    assert result == BriefingResult(text="Brief.", model="test/model")
+    assert calls[0]["max_tokens"] == 120
+
+
 def test_litellm_client_rejects_empty_response(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_acompletion(**kwargs):
         return {"choices": [{"message": {"content": "   "}}]}

@@ -22,7 +22,10 @@ def test_builds_briefing_request_from_text() -> None:
     assert request.source == "literal"
     assert request.text == "Briefly builds requests."
     assert request.options == options
-    assert "Create a short concise brief in plain text." in request.prompt
+    assert "- Write a short brief." in request.prompt
+    assert "- Use 2-3 sentences." in request.prompt
+    assert "- Do not use headings or bullets." in request.prompt
+    assert "- Do not use Markdown formatting." in request.prompt
     assert "Briefly builds requests." in request.prompt
 
 
@@ -38,6 +41,7 @@ def test_applies_max_input_characters() -> None:
 
     assert request.text == "abcd"
     assert request.prompt.endswith("abcd")
+    assert request.options.max_output_tokens == 300
 
 
 def test_preserves_markdown_output_format() -> None:
@@ -50,7 +54,47 @@ def test_preserves_markdown_output_format() -> None:
     )
 
     assert request.options.output_format == "markdown"
-    assert "Create a maximum 1000 character concise brief in Markdown." in request.prompt
+    assert "- Write a brief no longer than 1000 characters." in request.prompt
+    assert "- Markdown output is allowed." in request.prompt
+
+
+def test_adds_default_token_cap_for_length_preset() -> None:
+    request = build_briefing_request(
+        ResolvedInput(kind="text", source="literal", text="Keep it short."),
+        BriefingOptions(
+            length=LengthArg(kind="preset", preset="short"),
+            output_format="text",
+        ),
+    )
+
+    assert request.options.max_output_tokens == 120
+
+
+def test_explicit_max_tokens_overrides_length_default() -> None:
+    request = build_briefing_request(
+        ResolvedInput(kind="text", source="literal", text="Keep it short."),
+        BriefingOptions(
+            length=LengthArg(kind="preset", preset="short"),
+            output_format="text",
+            max_output_tokens=80,
+        ),
+    )
+
+    assert request.options.max_output_tokens == 80
+
+
+def test_long_prompt_allows_structure() -> None:
+    request = build_briefing_request(
+        ResolvedInput(kind="text", source="literal", text="A longer topic."),
+        BriefingOptions(
+            length=LengthArg(kind="preset", preset="long"),
+            output_format="markdown",
+        ),
+    )
+
+    assert "- Write a structured brief." in request.prompt
+    assert "- Use short sections and bullets where useful." in request.prompt
+    assert request.options.max_output_tokens == 700
 
 
 def test_rejects_empty_text() -> None:

@@ -4,19 +4,48 @@ Python CLI for creating concise briefs from text, files, URLs, and later media
 sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
-print extracted text, and generate a real text brief through LiteLLM. URL
-extraction is not implemented yet.
+print extracted text, and generate length-controlled text briefs through
+LiteLLM. URL extraction is not implemented yet.
 
 ## Usage
 
+### Brief text with an LLM
+
+```bash
+uv run briefly "Paste or type any text here." --model openai/gpt-4o-mini
+uv run briefly "Long article text..." --model openai/gpt-4o-mini --length short
+uv run briefly "Long article text..." --model openai/gpt-4o-mini --length long
+```
+
+### Brief a file
+
+```bash
+uv run briefly notes.txt --model openai/gpt-4o-mini
+```
+
+### Extract mode (no LLM call, just resolve and print input)
+
+```bash
+uv run briefly "Some text" --extract
+uv run briefly README.md --extract
+echo "Piped text" | uv run briefly - --extract
+```
+
+### Options
+
 ```bash
 uv run briefly --help
-uv run briefly "Text to inspect." --extract
-uv run briefly README.md --extract
-echo "Text from stdin." | uv run briefly - --extract
-uv run briefly "Text to brief." --model openai/gpt-4o-mini
-uv run briefly "Text to brief." --model openai/gpt-4o-mini --length short
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--extract` | Print resolved input without briefing |
+| `--model TEXT` | LLM model id (required for briefing) |
+| `--length TEXT` | Brief length: `short`, `medium`, `long`, `xl`, `xxl`, or a char count like `500` |
+| `--output-format TEXT` | Output format: `text` or `markdown` |
+| `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
+| `--max-tokens TEXT` | Maximum output tokens |
+| `--skip-cache` | Skip cache (not yet implemented) |
 
 ## Development
 

@@ -2,6 +2,27 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.4 - Brief Controls
+
+Why: make length and output-format flags shape model output predictably.
+
+Completed:
+
+- Added prompt profiles for `short`, `medium`, `long`, `xl`, and `xxl`.
+- Added default token caps for length presets.
+- Kept explicit `--max-tokens` as the override.
+- Made text output ask for no Markdown formatting.
+- Added tests for prompt and token behavior.
+
+Not built yet:
+
+- URL extraction.
+- Streaming output.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.3 - LiteLLM Briefing
 
 Why: make resolved text input produce a real model-backed brief.

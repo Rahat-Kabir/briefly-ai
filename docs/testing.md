@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 45 passed
+pytest: 49 passed
 ruff: All checks passed
 ```
 
@@ -44,6 +44,7 @@ tests/
 - CLI help and version output.
 - Root input command routing.
 - Briefing request construction.
+- Length preset and output-format prompt behavior.
 - Mocked LLM client behavior.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - Placeholder briefing behavior.
