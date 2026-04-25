@@ -1,0 +1,95 @@
+# Progress
+
+This is the per-feature development log. Add one entry per completed version.
+
+## v0.1.3 - LiteLLM Briefing
+
+Why: make resolved text input produce a real model-backed brief.
+
+Completed:
+
+- Added LiteLLM as the first LLM dependency.
+- Added `BriefingResult`, `BriefingClient`, and `LiteLlmBriefingClient`.
+- Wired the CLI to call LiteLLM for non-extract text briefing.
+- Required explicit `--model` before real briefing calls.
+- Added mocked tests for the LLM client and CLI output.
+- Added MIT license.
+
+Not built yet:
+
+- URL extraction.
+- Streaming output.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
+## v0.1.2 - Briefing Request
+
+Why: define the internal request shape before adding an LLM provider.
+
+Completed:
+
+- Added `BriefingOptions` and `BriefingRequest`.
+- Added prompt construction for resolved text input.
+- Wired the CLI to build requests before placeholder briefing output.
+- Added tests for request creation, truncation, format/length preservation, and
+  unsupported URL briefing.
+
+Not built yet:
+
+- LLM calls.
+- URL extraction.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
+## v0.1.1 - Input Resolver
+
+Why: create the first usable CLI slice by resolving text input before adding
+LLM or URL extraction work.
+
+Completed:
+
+- Added core input resolution for literal text, local text files, stdin, and URL
+  detection.
+- Wired `--extract-only` / `--extract` to print resolved text.
+- Added a clear URL extraction placeholder error.
+- Added tests for core input resolution and CLI extract mode.
+
+Not built yet:
+
+- LLM calls.
+- URL extraction.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
+## v0.1.0 - Foundation
+
+Why: establish a clean Briefly-native Python base before adding LLM, extraction,
+daemon, or media features.
+
+Completed:
+
+- Created `uv` workspace.
+- Added `briefly-core` and `briefly-cli`.
+- Added `briefly [input]` command shape.
+- Added hidden root `brief` command.
+- Added placeholder `daemon`, `slides`, and `transcriber` commands.
+- Added Briefly-native config loader at `~/.briefly/config.json`.
+- Added flag parsing.
+- Added tests for CLI help, config loading, and flags.
+- Added lint/test workflow.
+- Added README and docs baseline.
+
+Not built yet:
+
+- LLM calls.
+- Content extraction.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
