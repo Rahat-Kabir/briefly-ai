@@ -60,7 +60,7 @@ def build_briefing_request(
     resolved_input: ResolvedInput,
     options: BriefingOptions,
 ) -> BriefingRequest:
-    if resolved_input.kind == "url":
+    if resolved_input.kind == "url" and resolved_input.text is None:
         raise ValueError("URL briefing is not implemented yet.")
 
     if resolved_input.text is None:

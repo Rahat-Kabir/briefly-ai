@@ -58,6 +58,7 @@ Built so far:
 - Extract mode for literal text, local files, and stdin.
 - Internal briefing request builder for resolved text input.
 - LiteLLM-backed briefing for resolved text input with explicit `--model`.
+- HTML URL extraction and URL briefing.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, briefing requests, mocked LLM behavior,
   flag parsing, input resolution, and config loading.
@@ -108,6 +109,7 @@ briefly-ai/
 |   |   `-- src/briefly_core/
 |   |       |-- __init__.py
 |   |       |-- briefing.py
+|   |       |-- content.py
 |   |       |-- config.py
 |   |       |-- flags.py
 |   |       |-- input.py
@@ -131,6 +133,7 @@ briefly-ai/
     |   `-- test_help.py
     `-- core/
         |-- test_briefing.py
+        |-- test_content.py
         |-- test_config.py
         |-- test_flags.py
         |-- test_input.py
@@ -229,7 +232,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 45 passed
+pytest: 55 passed
 ruff: All checks passed
 ```
 

@@ -19,7 +19,7 @@ def test_root_help() -> None:
 def test_version() -> None:
     result = runner.invoke(app, ["--version"], color=False)
     assert result.exit_code == 0
-    assert "briefly 0.1.4" in result.output
+    assert "briefly 0.1.6" in result.output
 
 
 def test_command_help() -> None:
@@ -55,10 +55,36 @@ def test_brief_prints_generated_result(monkeypatch) -> None:
     assert result.output == "Generated brief.\n"
 
 
-def test_url_briefing_fails_clearly_until_url_extraction_exists() -> None:
-    result = runner.invoke(app, ["https://example.com"], color=False)
-    assert result.exit_code != 0
-    assert "URL briefing is not implemented yet." in result.output
+def test_url_briefing_extracts_then_generates(monkeypatch) -> None:
+    async def fake_extract_url(url: str):
+        assert url == "https://example.com"
+        return type(
+            "Extracted",
+            (),
+            {
+                "source": "https://example.com/final",
+                "title": "Example Domain",
+                "text": "This domain is for examples.",
+            },
+        )()
+
+    async def fake_generate_brief(request):
+        assert request.input_kind == "url"
+        assert request.source == "https://example.com/final"
+        assert request.text == "Example Domain\n\nThis domain is for examples."
+        return type("Result", (), {"text": "Generated URL brief."})()
+
+    monkeypatch.setattr("briefly_cli.commands.brief.extract_url", fake_extract_url)
+    monkeypatch.setattr("briefly_cli.commands.brief.generate_brief", fake_generate_brief)
+
+    result = runner.invoke(
+        app,
+        ["https://example.com", "--model", "test/model"],
+        color=False,
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Generated URL brief.\n"
 
 
 def test_root_validates_flags() -> None:

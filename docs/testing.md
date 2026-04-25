@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 49 passed
+pytest: 55 passed
 ruff: All checks passed
 ```
 
@@ -33,6 +33,7 @@ tests/
     test_help.py
   core/
     test_briefing.py
+    test_content.py
     test_config.py
     test_flags.py
     test_input.py
@@ -45,6 +46,7 @@ tests/
 - Root input command routing.
 - Briefing request construction.
 - Length preset and output-format prompt behavior.
+- URL HTML extraction and URL briefing routing.
 - Mocked LLM client behavior.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - Placeholder briefing behavior.
@@ -57,7 +59,7 @@ tests/
 ## What Is Not Covered Yet
 
 - Live LLM calls.
-- Content extraction.
+- Non-HTML content extraction.
 - Cache behavior.
 - Daemon routes.
 - Slides/transcription behavior.

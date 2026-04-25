@@ -117,3 +117,21 @@ def test_rejects_url_input_until_url_briefing_exists() -> None:
                 output_format="text",
             ),
         )
+
+
+def test_builds_briefing_request_from_extracted_url_text() -> None:
+    request = build_briefing_request(
+        ResolvedInput(
+            kind="url",
+            source="https://example.com/final",
+            text="Example Domain\n\nThis domain is for examples.",
+        ),
+        BriefingOptions(
+            length=LengthArg(kind="preset", preset="short"),
+            output_format="text",
+        ),
+    )
+
+    assert request.input_kind == "url"
+    assert request.source == "https://example.com/final"
+    assert request.text == "Example Domain\n\nThis domain is for examples."

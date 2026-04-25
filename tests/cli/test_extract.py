@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+import pytest
 
 from briefly_cli.main import app
 
@@ -30,8 +31,34 @@ def test_extracts_stdin() -> None:
     assert result.output == "Briefly reads stdin.\n"
 
 
-def test_extracting_url_fails_clearly_until_url_extraction_exists() -> None:
+def test_extracts_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_extract_url(url: str):
+        assert url == "https://example.com"
+        return type(
+            "Extracted",
+            (),
+            {
+                "source": "https://example.com",
+                "title": "Example Domain",
+                "text": "This domain is for examples.",
+            },
+        )()
+
+    monkeypatch.setattr("briefly_cli.commands.brief.extract_url", fake_extract_url)
+
     result = runner.invoke(app, ["https://example.com", "--extract"], color=False)
 
+    assert result.exit_code == 0
+    assert result.output == "Example Domain\n\nThis domain is for examples.\n"
+
+
+def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_extract_url(url: str):
+        raise ValueError("URL did not return HTML content: application/json")
+
+    monkeypatch.setattr("briefly_cli.commands.brief.extract_url", fake_extract_url)
+
+    result = runner.invoke(app, ["https://example.com/data.json", "--extract"], color=False)
+
     assert result.exit_code != 0
-    assert "URL extraction is not implemented yet." in result.output
+    assert "URL did not return HTML content: application/json" in result.output

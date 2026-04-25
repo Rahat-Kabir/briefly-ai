@@ -65,11 +65,11 @@ input/output limits.
 Current behavior:
 
 - Literal text, file text, and stdin can build briefing requests.
+- Extracted HTML URL text can build briefing requests.
 - Length presets add concrete prompt instructions and default output token caps.
 - `--format text` asks for plain text without Markdown formatting.
 - `--format markdown` allows Markdown output.
 - Empty text is rejected.
-- URL briefing fails clearly until URL extraction exists.
 
 ## LLM
 
@@ -78,7 +78,7 @@ Briefly uses LiteLLM for real briefing calls. The CLI requires an explicit
 
 Current behavior:
 
-- Text, file, and stdin briefing can call a real model.
+- Text, file, stdin, and HTML URL briefing can call a real model.
 - `--max-tokens` forwards to LiteLLM as `max_tokens` and overrides length
   preset defaults.
 - Missing model fails with a clear error.
@@ -92,12 +92,12 @@ Current supported input kinds:
 
 - `-` reads text from stdin.
 - Existing local files are read as UTF-8 text.
-- `http` and `https` URLs are detected, but URL extraction is not implemented
-  yet.
+- `http` and `https` URLs are fetched when extraction or briefing needs text.
 - Any other value is treated as literal text.
 
 `--extract-only` / `--extract` prints resolved text for literal, file, and stdin
-input. URL extract mode fails clearly until URL extraction exists.
+input. URL extract mode fetches HTML, removes non-content elements, and prints
+title plus page text.
 
 ## Config
 
@@ -158,7 +158,6 @@ becomes:
 
 These are intentionally not designed yet:
 
-- URL extraction.
 - Streaming output.
 - Provider presets and config-driven model resolution.
 - Cache database/filesystem layout.

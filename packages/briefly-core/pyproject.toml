@@ -1,9 +1,11 @@
 [project]
 name = "briefly-core"
-version = "0.1.4"
+version = "0.1.6"
 description = "Core library for Briefly."
 requires-python = ">=3.11"
 dependencies = [
+  "beautifulsoup4>=4.12",
+  "httpx>=0.28",
   "litellm>=1.0",
 ]
 

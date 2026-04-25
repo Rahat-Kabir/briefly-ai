@@ -5,6 +5,7 @@ import asyncio
 import click
 
 from briefly_core.briefing import BriefingOptions, build_briefing_request
+from briefly_core.content import extract_url
 from briefly_core.flags import (
     parse_extract_format,
     parse_length_arg,
@@ -12,7 +13,7 @@ from briefly_core.flags import (
     parse_max_output_tokens,
     parse_stream_mode,
 )
-from briefly_core.input import resolve_input_target
+from briefly_core.input import ResolvedInput, resolve_input_target
 from briefly_core.llm import generate_brief
 
 
@@ -60,12 +61,16 @@ def brief(
     )
 
     if extract_only:
-        if resolved_input.text is None:
-            raise click.ClickException("URL extraction is not implemented yet.")
-        click.echo(resolved_input.text, nl=not resolved_input.text.endswith("\n"))
+        try:
+            extracted_input = asyncio.run(_resolve_extractable_input(resolved_input))
+        except Exception as error:
+            raise click.ClickException(str(error)) from error
+        extracted_text = extracted_input.text or ""
+        click.echo(extracted_text, nl=not extracted_text.endswith("\n"))
         return
 
     try:
+        resolved_briefing_input = asyncio.run(_resolve_extractable_input(resolved_input))
         briefing_options = BriefingOptions(
             length=parsed_length,
             output_format=parsed_output_format,
@@ -73,8 +78,8 @@ def brief(
             max_input_chars=parsed_max_input_chars,
             max_output_tokens=parsed_max_tokens,
         )
-        briefing_request = build_briefing_request(resolved_input, briefing_options)
-    except ValueError as error:
+        briefing_request = build_briefing_request(resolved_briefing_input, briefing_options)
+    except Exception as error:
         raise click.ClickException(str(error)) from error
 
     try:
@@ -84,3 +89,18 @@ def brief(
 
     _ = skip_cache
     click.echo(briefing_result.text)
+
+
+async def _resolve_extractable_input(resolved_input: ResolvedInput) -> ResolvedInput:
+    if resolved_input.kind == "url":
+        extracted = await extract_url(resolved_input.source)
+        source = extracted.source
+        if extracted.title:
+            text = f"{extracted.title}\n\n{extracted.text}"
+        else:
+            text = extracted.text
+        return ResolvedInput(kind="url", source=source, text=text)
+
+    if resolved_input.text is None:
+        raise ValueError("Input did not resolve to text.")
+    return resolved_input

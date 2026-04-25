@@ -2,6 +2,41 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.6 - URL Briefing
+
+Why: let URL input use the existing LiteLLM briefing pipeline.
+
+Completed:
+
+- Wired URL briefing to extract HTML before building a briefing request.
+- Added tests for URL extraction feeding generated briefing output.
+
+Not built yet:
+
+- Streaming output.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
+## v0.1.5 - URL Extract Mode
+
+Why: make URL input produce page text before summarizing URLs.
+
+Completed:
+
+- Added HTML URL extraction with `httpx` and BeautifulSoup.
+- Added `--extract` support for URL input.
+- Added tests for HTML parsing, non-HTML failures, empty pages, and CLI output.
+
+Not built yet:
+
+- Streaming output.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.4 - Brief Controls
 
 Why: make length and output-format flags shape model output predictably.
