@@ -4,6 +4,7 @@ import click
 
 from briefly_cli import __version__
 from briefly_cli.commands.brief import brief
+from briefly_cli.commands.cache import cache
 from briefly_cli.commands.config import config
 from briefly_cli.commands.daemon import daemon
 from briefly_cli.commands.slides import slides
@@ -58,6 +59,7 @@ def app() -> None:
 
 
 app.add_command(brief)
+app.add_command(cache)
 app.add_command(config)
 app.add_command(slides)
 app.add_command(daemon)

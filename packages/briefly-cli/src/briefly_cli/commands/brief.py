@@ -5,8 +5,14 @@ import asyncio
 import click
 
 from briefly_core.briefing import BriefingOptions, build_briefing_request
+from briefly_core.cache import (
+    get_summary_cache,
+    get_url_cache,
+    set_summary_cache,
+    set_url_cache,
+)
 from briefly_core.config import ConfigData, load_config
-from briefly_core.content import extract_url
+from briefly_core.content import ExtractedContent, extract_url
 from briefly_core.flags import (
     StreamMode,
     parse_extract_format,
@@ -62,9 +68,20 @@ def brief(
         stdin_reader=lambda: click.get_text_stream("stdin").read(),
     )
 
+    try:
+        config = load_config().config if not extract_only or not skip_cache else None
+    except Exception as error:
+        raise click.ClickException(str(error)) from error
+
     if extract_only:
         try:
-            extracted_input = asyncio.run(_resolve_extractable_input(resolved_input))
+            extracted_input = asyncio.run(
+                _resolve_extractable_input(
+                    resolved_input,
+                    skip_cache=skip_cache,
+                    cache_ttl_days=_cache_ttl_days(config),
+                )
+            )
         except Exception as error:
             raise click.ClickException(str(error)) from error
         extracted_text = extracted_input.text or ""
@@ -72,8 +89,14 @@ def brief(
         return
 
     try:
-        resolved_briefing_input = asyncio.run(_resolve_extractable_input(resolved_input))
-        resolved_model = _resolve_model(model, load_config().config)
+        resolved_briefing_input = asyncio.run(
+            _resolve_extractable_input(
+                resolved_input,
+                skip_cache=skip_cache,
+                cache_ttl_days=_cache_ttl_days(config),
+            )
+        )
+        resolved_model = _resolve_model(model, config)
         briefing_options = BriefingOptions(
             length=parsed_length,
             output_format=parsed_output_format,
@@ -85,11 +108,17 @@ def brief(
     except Exception as error:
         raise click.ClickException(str(error)) from error
 
-    _ = skip_cache
+    if not skip_cache:
+        cached_summary = _get_summary_cache(briefing_request, _cache_ttl_days(config))
+        if cached_summary is not None:
+            click.echo(cached_summary.text)
+            return
 
     if _should_stream(parsed_stream_mode):
         try:
-            asyncio.run(_run_stream(briefing_request))
+            streamed_text = asyncio.run(_run_stream(briefing_request))
+            if not skip_cache:
+                set_summary_cache(briefing_request, streamed_text)
         except Exception as error:
             raise click.ClickException(str(error)) from error
         return
@@ -98,6 +127,9 @@ def brief(
         briefing_result = asyncio.run(generate_brief(briefing_request))
     except Exception as error:
         raise click.ClickException(str(error)) from error
+
+    if not skip_cache:
+        set_summary_cache(briefing_request, briefing_result.text)
 
     click.echo(briefing_result.text)
 
@@ -108,6 +140,29 @@ def _should_stream(mode: StreamMode) -> bool:
     if mode == "off":
         return False
     return click.get_text_stream("stdout").isatty()
+
+
+def _cache_ttl_days(config: ConfigData | None) -> float | None:
+    cache = config.get("cache") if config else None
+    if not isinstance(cache, dict):
+        return None
+
+    ttl_days = cache.get("ttlDays")
+    if isinstance(ttl_days, int | float) and not isinstance(ttl_days, bool):
+        return float(ttl_days)
+    return None
+
+
+def _get_summary_cache(request, cache_ttl_days: float | None):
+    if cache_ttl_days is None:
+        return get_summary_cache(request)
+    return get_summary_cache(request, ttl_days=cache_ttl_days)
+
+
+def _get_url_cache(requested_url: str, cache_ttl_days: float | None):
+    if cache_ttl_days is None:
+        return get_url_cache(requested_url)
+    return get_url_cache(requested_url, ttl_days=cache_ttl_days)
 
 
 def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
@@ -149,29 +204,47 @@ def _resolve_config_model(model: object, config: ConfigData) -> str | None:
     return None
 
 
-async def _run_stream(request) -> None:
+async def _run_stream(request) -> str:
     stdout = click.get_text_stream("stdout")
     last_char = ""
+    chunks: list[str] = []
     async for chunk in generate_brief_stream(request):
         stdout.write(chunk)
         stdout.flush()
+        chunks.append(chunk)
         if chunk:
             last_char = chunk[-1]
     if last_char and last_char != "\n":
         stdout.write("\n")
         stdout.flush()
+    return "".join(chunks).strip()
 
 
-async def _resolve_extractable_input(resolved_input: ResolvedInput) -> ResolvedInput:
+async def _resolve_extractable_input(
+    resolved_input: ResolvedInput,
+    *,
+    skip_cache: bool = False,
+    cache_ttl_days: float | None = None,
+) -> ResolvedInput:
     if resolved_input.kind == "url":
+        if not skip_cache:
+            cached_url = _get_url_cache(resolved_input.source, cache_ttl_days)
+            if cached_url is not None:
+                return _resolved_url_input(cached_url)
+
         extracted = await extract_url(resolved_input.source)
-        source = extracted.source
-        if extracted.title:
-            text = f"{extracted.title}\n\n{extracted.text}"
-        else:
-            text = extracted.text
-        return ResolvedInput(kind="url", source=source, text=text)
+        if not skip_cache:
+            set_url_cache(resolved_input.source, extracted)
+        return _resolved_url_input(extracted)
 
     if resolved_input.text is None:
         raise ValueError("Input did not resolve to text.")
     return resolved_input
+
+
+def _resolved_url_input(extracted: ExtractedContent) -> ResolvedInput:
+    if extracted.title:
+        text = f"{extracted.title}\n\n{extracted.text}"
+    else:
+        text = extracted.text
+    return ResolvedInput(kind="url", source=extracted.source, text=text)

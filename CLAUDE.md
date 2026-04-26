@@ -59,6 +59,7 @@ Built so far:
 - Internal briefing request builder for resolved text input.
 - LiteLLM-backed briefing with explicit or configured `--model`.
 - `briefly config init --model <id>` for first-time config creation.
+- SQLite URL and summary cache with TTL, `cache stats`, and `cache clear`.
 - HTML URL extraction and URL briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
@@ -111,6 +112,7 @@ briefly-ai/
 |   |   `-- src/briefly_core/
 |   |       |-- __init__.py
 |   |       |-- briefing.py
+|   |       |-- cache.py
 |   |       |-- content.py
 |   |       |-- config.py
 |   |       |-- flags.py
@@ -125,6 +127,7 @@ briefly-ai/
 |           `-- commands/
 |               |-- __init__.py
 |               |-- brief.py
+|               |-- cache.py
 |               |-- config.py
 |               |-- daemon.py
 |               |-- slides.py
@@ -132,6 +135,9 @@ briefly-ai/
 |
 `-- tests/
     |-- cli/
+    |   |-- conftest.py
+    |   |-- test_cache.py
+    |   |-- test_cache_commands.py
     |   |-- test_config_init.py
     |   |-- test_config_model.py
     |   |-- test_extract.py
@@ -139,6 +145,7 @@ briefly-ai/
     |   `-- test_stream.py
     `-- core/
         |-- test_briefing.py
+        |-- test_cache.py
         |-- test_content.py
         |-- test_config.py
         |-- test_flags.py
@@ -238,7 +245,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 75 passed
+pytest: 90 passed
 ruff: All checks passed
 ```
 

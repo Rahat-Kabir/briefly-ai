@@ -2,6 +2,25 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.10 - Cache Storage
+
+Why: avoid repeated URL extraction and model calls for identical requests.
+
+Completed:
+
+- Added SQLite URL and summary cache at `~/.briefly/cache.sqlite`.
+- Wired `--skip-cache` to bypass cache reads and writes.
+- Added TTLs: 7 days for URL extraction, 30 days for summaries, or
+  `cache.ttlDays` from config.
+- Added `briefly cache stats` and `briefly cache clear`.
+- Added core and CLI cache tests.
+
+Not built yet:
+
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.9 - Config Init Command
 
 Why: make first-time model config setup explicit and repeatable.
@@ -14,7 +33,6 @@ Completed:
 
 Not built yet:
 
-- Cache storage.
 - Daemon server.
 - Browser extension integration.
 - Slides/transcription implementation.

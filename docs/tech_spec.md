@@ -37,6 +37,8 @@ Current visible commands:
 briefly --help
 briefly --version
 briefly [input]
+briefly cache stats
+briefly cache clear
 briefly config init --model <model-id>
 briefly daemon --help
 briefly slides --help
@@ -105,6 +107,28 @@ Current supported input kinds:
 input. URL extract mode fetches HTML, removes non-content elements, and prints
 title plus page text.
 
+## Cache
+
+Briefly stores cache data in:
+
+```text
+~/.briefly/cache.sqlite
+```
+
+If `BRIEFLY_CONFIG` points to a custom config file, cache is stored beside that
+file as `cache.sqlite`.
+
+Current behavior:
+
+- URL extraction cache avoids repeated URL fetch/extract work.
+- Summary cache avoids repeated model calls for the same input/model/options.
+- `--skip-cache` bypasses cache reads and writes.
+- URL entries expire after 7 days by default.
+- Summary entries expire after 30 days by default.
+- Config `cache.ttlDays` overrides both TTLs.
+- `briefly cache stats` shows path, entry counts, and size.
+- `briefly cache clear` removes cache rows and keeps the SQLite file.
+
 ## Config
 
 Default config path:
@@ -128,6 +152,7 @@ The config loader currently supports:
 - Model shorthand normalization.
 - Basic `models`, `output`, `cache`, and `ui` sections.
 - CLI model resolution from top-level `model` and named `models` presets.
+- `cache.ttlDays` for cache freshness.
 - `briefly config init --model <id>` creates the config file and refuses
   overwrite unless `--force` is passed.
 
@@ -168,7 +193,6 @@ becomes:
 These are intentionally not designed yet:
 
 - Provider-specific behavior.
-- Cache database/filesystem layout.
 - Daemon server and local auth.
 - Browser extension API.
 - Slides and transcription workflow.

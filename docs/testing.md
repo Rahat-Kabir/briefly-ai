@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 75 passed
+pytest: 90 passed
 ruff: All checks passed
 ```
 
@@ -29,6 +29,9 @@ ruff: All checks passed
 ```text
 tests/
   cli/
+    conftest.py
+    test_cache.py
+    test_cache_commands.py
     test_config_init.py
     test_config_model.py
     test_extract.py
@@ -36,6 +39,7 @@ tests/
     test_stream.py
   core/
     test_briefing.py
+    test_cache.py
     test_content.py
     test_config.py
     test_flags.py
@@ -53,6 +57,7 @@ tests/
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Config-backed model resolution and `config init`.
+- URL and summary cache behavior, TTL, stats, and clear.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - Placeholder briefing behavior.
 - Flag parser behavior.
@@ -65,7 +70,6 @@ tests/
 
 - Live LLM calls.
 - Non-HTML content extraction.
-- Cache behavior.
 - Daemon routes.
 - Slides/transcription behavior.
 - Live network behavior.

@@ -5,8 +5,8 @@ sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
-LiteLLM. Config-backed model selection, HTML URL briefing, and token streaming
-are available.
+LiteLLM. Config-backed model selection, HTML URL briefing, token streaming, and
+local cache are available.
 
 ## Usage
 
@@ -69,7 +69,28 @@ uv run briefly --help
 | `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
 | `--max-tokens TEXT` | Maximum output tokens |
 | `--stream TEXT` | Streaming mode: `on`, `off`, or `auto` (TTY) |
-| `--skip-cache` | Skip cache (not yet implemented) |
+| `--skip-cache` | Skip cache reads and writes |
+
+### Cache
+
+Briefly stores URL extraction and summary results in `~/.briefly/cache.sqlite`.
+
+```bash
+uv run briefly cache stats
+uv run briefly cache clear
+uv run briefly https://example.com --skip-cache
+```
+
+Default TTLs: URL extraction cache expires after 7 days; summary cache expires
+after 30 days. Override both with:
+
+```json
+{
+  "cache": {
+    "ttlDays": 14
+  }
+}
+```
 
 ## Development
 
@@ -93,6 +114,7 @@ briefly-ai/
 |   |-- briefly-core/
 |   |   `-- src/briefly_core/
 |   |       |-- briefing.py
+|   |       |-- cache.py
 |   |       |-- content.py
 |   |       |-- config.py
 |   |       |-- flags.py
@@ -102,12 +124,17 @@ briefly-ai/
 |       `-- src/briefly_cli/
 |           |-- main.py
 |           `-- commands/
+|               |-- cache.py
 |               |-- config.py
 |-- tests/
 |   |-- cli/
+|   |   |-- conftest.py
+|   |   |-- test_cache.py
+|   |   |-- test_cache_commands.py
 |   |   |-- test_config_init.py
 |   |   |-- test_config_model.py
 |   `-- core/
+|       |-- test_cache.py
 `-- uv.lock
 ```
 
