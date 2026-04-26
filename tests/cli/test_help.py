@@ -11,6 +11,7 @@ def test_root_help() -> None:
     assert "Create concise briefs from text, files, and URLs." in result.output
     assert "--extract-only" in result.output
     assert "--max-input-chars" in result.output
+    assert "config" in result.output
     assert "slides" in result.output
     assert "daemon" in result.output
     assert "transcriber" in result.output
@@ -24,6 +25,7 @@ def test_version() -> None:
 
 def test_command_help() -> None:
     for command in (
+        ["config", "--help"],
         ["slides", "--help"],
         ["daemon", "--help"],
         ["transcriber", "setup", "--help"],

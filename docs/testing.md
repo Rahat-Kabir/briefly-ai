@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 64 passed
+pytest: 75 passed
 ruff: All checks passed
 ```
 
@@ -29,6 +29,8 @@ ruff: All checks passed
 ```text
 tests/
   cli/
+    test_config_init.py
+    test_config_model.py
     test_extract.py
     test_help.py
     test_stream.py
@@ -50,6 +52,7 @@ tests/
 - URL HTML extraction and URL briefing routing.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
+- Config-backed model resolution and `config init`.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - Placeholder briefing behavior.
 - Flag parser behavior.

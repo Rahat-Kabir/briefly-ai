@@ -37,6 +37,7 @@ Current visible commands:
 briefly --help
 briefly --version
 briefly [input]
+briefly config init --model <model-id>
 briefly daemon --help
 briefly slides --help
 briefly transcriber setup --help
@@ -127,6 +128,8 @@ The config loader currently supports:
 - Model shorthand normalization.
 - Basic `models`, `output`, `cache`, and `ui` sections.
 - CLI model resolution from top-level `model` and named `models` presets.
+- `briefly config init --model <id>` creates the config file and refuses
+  overwrite unless `--force` is passed.
 
 Model normalization:
 

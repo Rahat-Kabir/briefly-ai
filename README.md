@@ -19,8 +19,14 @@ uv run briefly "Long article text..." --model openai/gpt-4o-mini --length long
 uv run briefly https://example.com --model openai/gpt-4o-mini
 ```
 
-`--model` may be a raw model id or a named preset from
-`~/.briefly/config.json`:
+Create a default config once:
+
+```bash
+uv run briefly config init --model openai/gpt-4o-mini
+```
+
+This writes `~/.briefly/config.json` and refuses to overwrite it unless
+`--force` is passed. `--model` may also be a named preset from that file:
 
 ```json
 {
@@ -96,8 +102,11 @@ briefly-ai/
 |       `-- src/briefly_cli/
 |           |-- main.py
 |           `-- commands/
+|               |-- config.py
 |-- tests/
 |   |-- cli/
+|   |   |-- test_config_init.py
+|   |   |-- test_config_model.py
 |   `-- core/
 `-- uv.lock
 ```
