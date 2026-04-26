@@ -57,7 +57,7 @@ Built so far:
 - Root command shape: `briefly [input]`.
 - Extract mode for literal text, local files, and stdin.
 - Internal briefing request builder for resolved text input.
-- LiteLLM-backed briefing for resolved text input with explicit `--model`.
+- LiteLLM-backed briefing with explicit or configured `--model`.
 - HTML URL extraction and URL briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
@@ -130,6 +130,7 @@ briefly-ai/
 |
 `-- tests/
     |-- cli/
+    |   |-- test_config_model.py
     |   |-- test_extract.py
     |   |-- test_help.py
     |   `-- test_stream.py
@@ -234,7 +235,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 64 passed
+pytest: 70 passed
 ruff: All checks passed
 ```
 

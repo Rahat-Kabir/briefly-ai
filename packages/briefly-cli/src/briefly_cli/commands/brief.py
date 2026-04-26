@@ -5,6 +5,7 @@ import asyncio
 import click
 
 from briefly_core.briefing import BriefingOptions, build_briefing_request
+from briefly_core.config import ConfigData, load_config
 from briefly_core.content import extract_url
 from briefly_core.flags import (
     StreamMode,
@@ -72,10 +73,11 @@ def brief(
 
     try:
         resolved_briefing_input = asyncio.run(_resolve_extractable_input(resolved_input))
+        resolved_model = _resolve_model(model, load_config().config)
         briefing_options = BriefingOptions(
             length=parsed_length,
             output_format=parsed_output_format,
-            model=model,
+            model=resolved_model,
             max_input_chars=parsed_max_input_chars,
             max_output_tokens=parsed_max_tokens,
         )
@@ -106,6 +108,45 @@ def _should_stream(mode: StreamMode) -> bool:
     if mode == "off":
         return False
     return click.get_text_stream("stdout").isatty()
+
+
+def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
+    if model is not None:
+        model_value = model.strip()
+        if "/" in model_value:
+            return model_value
+        return _resolve_named_model(model_value, config)
+
+    if config is None:
+        return None
+
+    configured_model = config.get("model")
+    if configured_model is None:
+        return None
+
+    return _resolve_config_model(configured_model, config)
+
+
+def _resolve_named_model(name: str, config: ConfigData | None) -> str:
+    models = config.get("models") if config else None
+    if not isinstance(models, dict) or name not in models:
+        raise ValueError(f"Unknown model preset: {name}")
+    return _resolve_config_model(models[name], config)
+
+
+def _resolve_config_model(model: object, config: ConfigData) -> str | None:
+    if not isinstance(model, dict):
+        raise ValueError("Configured model must be an object.")
+
+    model_id = model.get("id")
+    if isinstance(model_id, str):
+        return model_id
+
+    model_name = model.get("name")
+    if isinstance(model_name, str):
+        return _resolve_named_model(model_name, config)
+
+    return None
 
 
 async def _run_stream(request) -> None:

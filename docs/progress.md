@@ -2,6 +2,24 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.8 - Config Model Resolution
+
+Why: let users set a default model once instead of passing `--model` every run.
+
+Completed:
+
+- Loaded Briefly config in the root briefing command.
+- Resolved raw model ids, named `models` presets, and top-level default `model`.
+- Added CLI tests for default, named, override, missing, and unknown model cases.
+
+Not built yet:
+
+- Config file creation command.
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.7 - Streaming Output
 
 Why: print tokens as they arrive and clear the parsed-but-unused `--stream`

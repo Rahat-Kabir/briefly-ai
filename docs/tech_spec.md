@@ -73,12 +73,14 @@ Current behavior:
 
 ## LLM
 
-Briefly uses LiteLLM for real briefing calls. The CLI requires an explicit
-`--model` for now and passes the built prompt to `litellm.acompletion`.
+Briefly uses LiteLLM for real briefing calls. The CLI resolves a model before
+calling `litellm.acompletion`.
 
 Current behavior:
 
 - Text, file, stdin, and HTML URL briefing can call a real model.
+- Model resolution order is raw `--model`, named `--model` preset, top-level
+  config `model`, then the existing missing-model error.
 - `--max-tokens` forwards to LiteLLM as `max_tokens` and overrides length
   preset defaults.
 - Missing model fails with a clear error.
@@ -124,6 +126,7 @@ The config loader currently supports:
 - Top-level object validation.
 - Model shorthand normalization.
 - Basic `models`, `output`, `cache`, and `ui` sections.
+- CLI model resolution from top-level `model` and named `models` presets.
 
 Model normalization:
 
@@ -161,7 +164,7 @@ becomes:
 
 These are intentionally not designed yet:
 
-- Provider presets and config-driven model resolution.
+- Provider-specific behavior.
 - Cache database/filesystem layout.
 - Daemon server and local auth.
 - Browser extension API.

@@ -5,7 +5,8 @@ sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
-LiteLLM. HTML URL extraction, URL briefing, and token streaming are available.
+LiteLLM. Config-backed model selection, HTML URL briefing, and token streaming
+are available.
 
 ## Usage
 
@@ -16,6 +17,18 @@ uv run briefly "Paste or type any text here." --model openai/gpt-4o-mini
 uv run briefly "Long article text..." --model openai/gpt-4o-mini --length short
 uv run briefly "Long article text..." --model openai/gpt-4o-mini --length long
 uv run briefly https://example.com --model openai/gpt-4o-mini
+```
+
+`--model` may be a raw model id or a named preset from
+`~/.briefly/config.json`:
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "models": {
+    "fast": "openai/gpt-4o-mini"
+  }
+}
 ```
 
 ### Brief a file
@@ -44,7 +57,7 @@ uv run briefly --help
 | Flag | Description |
 |------|-------------|
 | `--extract` | Print resolved input without briefing |
-| `--model TEXT` | LLM model id (required for briefing) |
+| `--model TEXT` | LLM model id or configured model preset |
 | `--length TEXT` | Brief length: `short`, `medium`, `long`, `xl`, `xxl`, or a char count like `500` |
 | `--output-format TEXT` | Output format: `text` or `markdown` |
 | `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
