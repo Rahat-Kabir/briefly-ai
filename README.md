@@ -5,7 +5,7 @@ sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
-LiteLLM. HTML URL extraction and URL briefing are available.
+LiteLLM. HTML URL extraction, URL briefing, and token streaming are available.
 
 ## Usage
 
@@ -49,6 +49,7 @@ uv run briefly --help
 | `--output-format TEXT` | Output format: `text` or `markdown` |
 | `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
 | `--max-tokens TEXT` | Maximum output tokens |
+| `--stream TEXT` | Streaming mode: `on`, `off`, or `auto` (TTY) |
 | `--skip-cache` | Skip cache (not yet implemented) |
 
 ## Development

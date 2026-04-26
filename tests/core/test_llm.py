@@ -6,7 +6,12 @@ import pytest
 from briefly_core.briefing import BriefingOptions, build_briefing_request
 from briefly_core.flags import LengthArg
 from briefly_core.input import ResolvedInput
-from briefly_core.llm import BriefingResult, LiteLlmBriefingClient, generate_brief
+from briefly_core.llm import (
+    BriefingResult,
+    LiteLlmBriefingClient,
+    generate_brief,
+    generate_brief_stream,
+)
 
 
 def _request(model: str | None = "test/model", max_output_tokens: int | None = None):
@@ -26,6 +31,10 @@ def test_generate_brief_uses_injected_client() -> None:
         async def generate(self, request):
             assert request.text == "Brief this."
             return BriefingResult(text="Fake brief.", model="fake/model")
+
+        async def stream(self, request):
+            raise AssertionError("stream should not run")
+            yield ""  # pragma: no cover
 
     result = asyncio.run(generate_brief(_request(), FakeClient()))
 
@@ -91,3 +100,98 @@ def test_litellm_client_rejects_empty_response(monkeypatch: pytest.MonkeyPatch) 
 
     with pytest.raises(ValueError, match="empty briefing"):
         asyncio.run(LiteLlmBriefingClient().generate(_request()))
+
+
+class _FakeStream:
+    def __init__(self, chunks):
+        self._chunks = list(chunks)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._chunks:
+            raise StopAsyncIteration
+        return self._chunks.pop(0)
+
+
+def test_litellm_client_streams_chunks(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+
+    async def fake_acompletion(**kwargs):
+        calls.append(kwargs)
+        return _FakeStream(
+            [
+                {"choices": [{"delta": {"content": "Hello "}}]},
+                {"choices": [{"delta": {"content": "world"}}]},
+                {"choices": [{"delta": {"content": ""}}]},
+                {"choices": [{"delta": {}}]},
+                {"choices": [{"delta": {"content": "!"}}]},
+            ]
+        )
+
+    import litellm
+
+    monkeypatch.setattr(litellm, "acompletion", fake_acompletion)
+
+    async def collect():
+        chunks = []
+        async for chunk in LiteLlmBriefingClient().stream(_request(max_output_tokens=42)):
+            chunks.append(chunk)
+        return chunks
+
+    chunks = asyncio.run(collect())
+
+    assert chunks == ["Hello ", "world", "!"]
+    assert calls[0]["stream"] is True
+    assert calls[0]["max_tokens"] == 42
+    assert calls[0]["model"] == "test/model"
+
+
+def test_litellm_client_stream_requires_model() -> None:
+    async def collect():
+        async for _ in LiteLlmBriefingClient().stream(_request(model=None)):
+            pass
+
+    with pytest.raises(ValueError, match="Model is required"):
+        asyncio.run(collect())
+
+
+def test_litellm_client_stream_rejects_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_acompletion(**kwargs):
+        return _FakeStream(
+            [
+                {"choices": [{"delta": {"content": ""}}]},
+                {"choices": [{"delta": {}}]},
+            ]
+        )
+
+    import litellm
+
+    monkeypatch.setattr(litellm, "acompletion", fake_acompletion)
+
+    async def collect():
+        async for _ in LiteLlmBriefingClient().stream(_request()):
+            pass
+
+    with pytest.raises(ValueError, match="empty briefing"):
+        asyncio.run(collect())
+
+
+def test_generate_brief_stream_uses_injected_client() -> None:
+    class FakeClient:
+        async def generate(self, request):
+            raise AssertionError("generate should not run")
+
+        async def stream(self, request):
+            assert request.text == "Brief this."
+            for piece in ["A ", "fake ", "brief."]:
+                yield piece
+
+    async def collect():
+        chunks = []
+        async for chunk in generate_brief_stream(_request(), FakeClient()):
+            chunks.append(chunk)
+        return chunks
+
+    assert asyncio.run(collect()) == ["A ", "fake ", "brief."]

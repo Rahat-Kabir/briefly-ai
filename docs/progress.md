@@ -2,6 +2,26 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.7 - Streaming Output
+
+Why: print tokens as they arrive and clear the parsed-but-unused `--stream`
+flag.
+
+Completed:
+
+- Added `generate_brief_stream` and `LiteLlmBriefingClient.stream` using
+  `litellm.acompletion(stream=True)`.
+- Wired `--stream on|off|auto` in the CLI; `auto` streams when stdout is a TTY.
+- Added core and CLI tests for chunk order, trailing newline, off/auto paths,
+  and stream errors.
+
+Not built yet:
+
+- Cache storage.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.6 - URL Briefing
 
 Why: let URL input use the existing LiteLLM briefing pipeline.

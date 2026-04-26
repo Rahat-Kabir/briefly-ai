@@ -7,6 +7,7 @@ import click
 from briefly_core.briefing import BriefingOptions, build_briefing_request
 from briefly_core.content import extract_url
 from briefly_core.flags import (
+    StreamMode,
     parse_extract_format,
     parse_length_arg,
     parse_max_extract_characters,
@@ -14,7 +15,7 @@ from briefly_core.flags import (
     parse_stream_mode,
 )
 from briefly_core.input import ResolvedInput, resolve_input_target
-from briefly_core.llm import generate_brief
+from briefly_core.llm import generate_brief, generate_brief_stream
 
 
 @click.command(hidden=True)
@@ -49,7 +50,7 @@ def brief(
     try:
         parsed_output_format = parse_extract_format(output_format)
         parsed_length = parse_length_arg(length)
-        parse_stream_mode(stream)
+        parsed_stream_mode = parse_stream_mode(stream)
         parsed_max_input_chars = parse_max_extract_characters(max_input_chars)
         parsed_max_tokens = parse_max_output_tokens(max_tokens)
     except ValueError as error:
@@ -82,13 +83,42 @@ def brief(
     except Exception as error:
         raise click.ClickException(str(error)) from error
 
+    _ = skip_cache
+
+    if _should_stream(parsed_stream_mode):
+        try:
+            asyncio.run(_run_stream(briefing_request))
+        except Exception as error:
+            raise click.ClickException(str(error)) from error
+        return
+
     try:
         briefing_result = asyncio.run(generate_brief(briefing_request))
     except Exception as error:
         raise click.ClickException(str(error)) from error
 
-    _ = skip_cache
     click.echo(briefing_result.text)
+
+
+def _should_stream(mode: StreamMode) -> bool:
+    if mode == "on":
+        return True
+    if mode == "off":
+        return False
+    return click.get_text_stream("stdout").isatty()
+
+
+async def _run_stream(request) -> None:
+    stdout = click.get_text_stream("stdout")
+    last_char = ""
+    async for chunk in generate_brief_stream(request):
+        stdout.write(chunk)
+        stdout.flush()
+        if chunk:
+            last_char = chunk[-1]
+    if last_char and last_char != "\n":
+        stdout.write("\n")
+        stdout.flush()
 
 
 async def _resolve_extractable_input(resolved_input: ResolvedInput) -> ResolvedInput:

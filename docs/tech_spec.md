@@ -82,7 +82,10 @@ Current behavior:
 - `--max-tokens` forwards to LiteLLM as `max_tokens` and overrides length
   preset defaults.
 - Missing model fails with a clear error.
-- Streaming, retries, provider presets, and cost reporting are deferred.
+- `--stream on|off|auto` controls token streaming. `auto` streams when stdout
+  is a TTY. Streaming uses `litellm.acompletion(stream=True)` and prints
+  chunks as plain text.
+- Retries, provider presets, and cost reporting are deferred.
 
 ## Input Resolution
 
@@ -158,7 +161,6 @@ becomes:
 
 These are intentionally not designed yet:
 
-- Streaming output.
 - Provider presets and config-driven model resolution.
 - Cache database/filesystem layout.
 - Daemon server and local auth.
