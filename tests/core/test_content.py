@@ -36,7 +36,7 @@ def test_extract_html_text_removes_non_content_elements() -> None:
 def test_extract_html_text_uses_trafilatura_first(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "briefly_core.content._extract_trafilatura_text",
-        lambda html: "Main article text.",
+        lambda html, **kwargs: "Main article text.",
     )
     monkeypatch.setattr(
         "briefly_core.content._extract_trafilatura_title",
@@ -52,7 +52,7 @@ def test_extract_html_text_uses_trafilatura_first(monkeypatch: pytest.MonkeyPatc
 def test_extract_html_text_falls_back_when_trafilatura_is_empty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("briefly_core.content._extract_trafilatura_text", lambda html: "")
+    monkeypatch.setattr("briefly_core.content._extract_trafilatura_text", lambda html, **kwargs: "")
     monkeypatch.setattr("briefly_core.content._extract_trafilatura_title", lambda html: None)
 
     title, text = extract_html_text(
@@ -61,6 +61,40 @@ def test_extract_html_text_falls_back_when_trafilatura_is_empty(
 
     assert title == "Fallback Title"
     assert text == "Fallback text."
+
+
+def test_extract_html_text_can_return_markdown(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen_format = None
+
+    def fake_trafilatura_text(html: str, **kwargs):
+        nonlocal seen_format
+        seen_format = kwargs["output_format"]
+        return "# Article\n\n[Link](https://example.com)"
+
+    monkeypatch.setattr(
+        "briefly_core.content._extract_trafilatura_text",
+        fake_trafilatura_text,
+    )
+
+    title, text = extract_html_text("<title>Article</title>", output_format="markdown")
+
+    assert seen_format == "markdown"
+    assert title == "Article"
+    assert text == "# Article\n\n[Link](https://example.com)"
+
+
+def test_extract_html_text_markdown_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("briefly_core.content._extract_trafilatura_text", lambda html, **kwargs: "")
+    monkeypatch.setattr("briefly_core.content._extract_trafilatura_title", lambda html: None)
+
+    title, text = extract_html_text(
+        '<title>Fallback Title</title><main><h1>Heading</h1><p>A <a href="/x">link</a>.</p></main>',
+        output_format="markdown",
+    )
+
+    assert title == "Fallback Title"
+    assert "# Heading" in text
+    assert "[link](/x)" in text
 
 
 def test_extract_url_uses_fetcher_and_returns_content() -> None:

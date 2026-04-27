@@ -8,7 +8,7 @@ runner = CliRunner()
 def test_url_cache_hit_avoids_extract_url(monkeypatch) -> None:
     calls = 0
 
-    async def fake_extract_url(url: str):
+    async def fake_extract_url(url: str, **kwargs):
         nonlocal calls
         calls += 1
         return type(
@@ -62,7 +62,7 @@ def test_summary_cache_hit_avoids_generate_brief(monkeypatch) -> None:
 
 
 def test_skip_cache_bypasses_url_and_summary_cache(monkeypatch) -> None:
-    async def cached_extract_url(url: str):
+    async def cached_extract_url(url: str, **kwargs):
         return type(
             "Extracted",
             (),
@@ -88,7 +88,7 @@ def test_skip_cache_bypasses_url_and_summary_cache(monkeypatch) -> None:
 
     fresh_calls = {"extract": 0, "generate": 0}
 
-    async def fresh_extract_url(url: str):
+    async def fresh_extract_url(url: str, **kwargs):
         fresh_calls["extract"] += 1
         return type(
             "Extracted",

@@ -7,6 +7,7 @@ dependencies = [
   "beautifulsoup4>=4.12",
   "httpx>=0.28",
   "litellm>=1.0",
+  "markdownify>=1.2.2",
   "trafilatura>=2.0",
 ]
 

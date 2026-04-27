@@ -56,6 +56,7 @@ def resolve_cache_path(env: Mapping[str, str | None] | None = None) -> Path | No
 def get_url_cache(
     requested_url: str,
     *,
+    output_format: str = "text",
     cache_path: Path | None = None,
     ttl_days: float | None = _DEFAULT_URL_TTL_DAYS,
 ) -> ExtractedContent | None:
@@ -63,7 +64,7 @@ def get_url_cache(
     if path is None or not path.exists():
         return None
 
-    key = url_cache_key(requested_url)
+    key = url_cache_key(requested_url, output_format=output_format)
     with _connect(path) as connection:
         row = connection.execute(
             "SELECT source, title, text, created_at FROM url_cache WHERE key = ?",
@@ -81,13 +82,14 @@ def set_url_cache(
     requested_url: str,
     extracted: ExtractedContent,
     *,
+    output_format: str = "text",
     cache_path: Path | None = None,
 ) -> None:
     path = cache_path or resolve_cache_path()
     if path is None:
         return
 
-    key = url_cache_key(requested_url)
+    key = url_cache_key(requested_url, output_format=output_format)
     path.parent.mkdir(parents=True, exist_ok=True)
     with _connect(path) as connection:
         _ensure_schema(connection)
@@ -191,12 +193,13 @@ def clear_cache(*, cache_path: Path | None = None) -> ClearedCache:
     return ClearedCache(path=path, url_entries=url_entries, summary_entries=summary_entries)
 
 
-def url_cache_key(requested_url: str) -> str:
+def url_cache_key(requested_url: str, *, output_format: str = "text") -> str:
     return _hash_payload(
         {
             "type": "url_extract",
             "version": _URL_EXTRACT_VERSION,
             "url": requested_url,
+            "output_format": output_format,
         }
     )
 

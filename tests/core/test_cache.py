@@ -55,6 +55,11 @@ def test_url_cache_round_trip(tmp_path: Path) -> None:
     set_url_cache("https://example.com", extracted, cache_path=cache_path)
 
     assert get_url_cache("https://example.com", cache_path=cache_path) == extracted
+    assert get_url_cache(
+        "https://example.com",
+        output_format="markdown",
+        cache_path=cache_path,
+    ) is None
 
 
 def test_summary_cache_round_trip(tmp_path: Path) -> None:

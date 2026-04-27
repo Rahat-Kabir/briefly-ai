@@ -3,13 +3,16 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 import re
+from typing import Literal
 
 import httpx
 from bs4 import BeautifulSoup
+from markdownify import ATX, markdownify
 from trafilatura import extract as trafilatura_extract
 from trafilatura import extract_metadata
 
 Fetcher = Callable[[str], Awaitable[httpx.Response]]
+ContentFormat = Literal["text", "markdown"]
 
 _DEFAULT_TIMEOUT_SECONDS = 15.0
 _WHITESPACE_PATTERN = re.compile(r"[ \t\r\f\v]+")
@@ -23,33 +26,45 @@ class ExtractedContent:
     text: str
 
 
-async def extract_url(url: str, *, fetcher: Fetcher | None = None) -> ExtractedContent:
+async def extract_url(
+    url: str,
+    *,
+    output_format: ContentFormat = "text",
+    fetcher: Fetcher | None = None,
+) -> ExtractedContent:
     response = await _fetch_url(url, fetcher)
     content_type = response.headers.get("content-type", "")
     if "text/html" not in content_type.lower():
         raise ValueError(f"URL did not return HTML content: {content_type or 'unknown'}")
 
     html = response.text
-    title, text = extract_html_text(html)
+    title, text = extract_html_text(html, output_format=output_format)
     if not text:
         raise ValueError("URL did not contain extractable text.")
 
     return ExtractedContent(source=str(response.url), title=title, text=text)
 
 
-def extract_html_text(html: str) -> tuple[str | None, str]:
+def extract_html_text(html: str, *, output_format: ContentFormat = "text") -> tuple[str | None, str]:
     title = _extract_html_title(html) or _extract_trafilatura_title(html)
     cleaned_html = _remove_non_content_elements(html)
-    text = _extract_trafilatura_text(cleaned_html)
+    text = _extract_trafilatura_text(cleaned_html, output_format=output_format)
     if text:
         return title, text
 
-    fallback_title, fallback_text = _extract_html_text_fallback(cleaned_html)
+    fallback_title, fallback_text = _extract_html_text_fallback(
+        cleaned_html,
+        output_format=output_format,
+    )
     return title or fallback_title, fallback_text
 
 
-def _extract_trafilatura_text(html: str) -> str:
-    text = trafilatura_extract(html, include_comments=False)
+def _extract_trafilatura_text(html: str, *, output_format: ContentFormat = "text") -> str:
+    kwargs: dict[str, object] = {"include_comments": False}
+    if output_format == "markdown":
+        kwargs["output_format"] = "markdown"
+
+    text = trafilatura_extract(html, **kwargs)
     if not isinstance(text, str):
         return ""
     return _clean_block_text(text)
@@ -75,7 +90,11 @@ def _remove_non_content_elements(html: str) -> str:
     return str(soup)
 
 
-def _extract_html_text_fallback(html: str) -> tuple[str | None, str]:
+def _extract_html_text_fallback(
+    html: str,
+    *,
+    output_format: ContentFormat = "text",
+) -> tuple[str | None, str]:
     soup = BeautifulSoup(html, "html.parser")
 
     title = _clean_inline_text(soup.title.get_text(" ", strip=True)) if soup.title else None
@@ -83,7 +102,10 @@ def _extract_html_text_fallback(html: str) -> tuple[str | None, str]:
         element.decompose()
 
     body = soup.body or soup
-    text = _clean_block_text(body.get_text("\n", strip=True))
+    if output_format == "markdown":
+        text = _clean_block_text(markdownify(str(body), heading_style=ATX))
+    else:
+        text = _clean_block_text(body.get_text("\n", strip=True))
     return title, text
 
 

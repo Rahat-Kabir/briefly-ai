@@ -54,7 +54,8 @@ uv run briefly https://example.com --extract
 echo "Piped text" | uv run briefly - --extract
 ```
 
-URL extraction uses trafilatura first, with BeautifulSoup fallback.
+URL extraction uses trafilatura first, with BeautifulSoup fallback. Use
+`--output-format markdown` to preserve Markdown-style headings and links.
 
 ### Options
 

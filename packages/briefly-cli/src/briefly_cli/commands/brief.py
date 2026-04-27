@@ -78,6 +78,7 @@ def brief(
             extracted_input = asyncio.run(
                 _resolve_extractable_input(
                     resolved_input,
+                    output_format=parsed_output_format,
                     skip_cache=skip_cache,
                     cache_ttl_days=_cache_ttl_days(config),
                 )
@@ -92,6 +93,7 @@ def brief(
         resolved_briefing_input = asyncio.run(
             _resolve_extractable_input(
                 resolved_input,
+                output_format=parsed_output_format,
                 skip_cache=skip_cache,
                 cache_ttl_days=_cache_ttl_days(config),
             )
@@ -159,10 +161,10 @@ def _get_summary_cache(request, cache_ttl_days: float | None):
     return get_summary_cache(request, ttl_days=cache_ttl_days)
 
 
-def _get_url_cache(requested_url: str, cache_ttl_days: float | None):
+def _get_url_cache(requested_url: str, output_format: str, cache_ttl_days: float | None):
     if cache_ttl_days is None:
-        return get_url_cache(requested_url)
-    return get_url_cache(requested_url, ttl_days=cache_ttl_days)
+        return get_url_cache(requested_url, output_format=output_format)
+    return get_url_cache(requested_url, output_format=output_format, ttl_days=cache_ttl_days)
 
 
 def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
@@ -223,18 +225,19 @@ async def _run_stream(request) -> str:
 async def _resolve_extractable_input(
     resolved_input: ResolvedInput,
     *,
+    output_format: str = "text",
     skip_cache: bool = False,
     cache_ttl_days: float | None = None,
 ) -> ResolvedInput:
     if resolved_input.kind == "url":
         if not skip_cache:
-            cached_url = _get_url_cache(resolved_input.source, cache_ttl_days)
+            cached_url = _get_url_cache(resolved_input.source, output_format, cache_ttl_days)
             if cached_url is not None:
                 return _resolved_url_input(cached_url)
 
-        extracted = await extract_url(resolved_input.source)
+        extracted = await extract_url(resolved_input.source, output_format=output_format)
         if not skip_cache:
-            set_url_cache(resolved_input.source, extracted)
+            set_url_cache(resolved_input.source, extracted, output_format=output_format)
         return _resolved_url_input(extracted)
 
     if resolved_input.text is None:

@@ -2,6 +2,23 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.12 - Markdown URL Extraction
+
+Why: preserve useful article structure such as headings and links during URL extraction.
+
+Completed:
+
+- Added Markdown URL extraction through trafilatura and markdownify fallback.
+- Wired `--output-format markdown` into URL extract and briefing paths.
+- Separated text and Markdown URL cache keys.
+- Added tests for Markdown extraction, fallback, cache keys, and briefing input.
+
+Not built yet:
+
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.11 - Primary Article Extraction
 
 Why: make URL briefs cleaner by extracting main article text before fallback text scraping.

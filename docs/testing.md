@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 92 passed
+pytest: 96 passed
 ruff: All checks passed
 ```
 
@@ -53,7 +53,8 @@ tests/
 - Root input command routing.
 - Briefing request construction.
 - Length preset and output-format prompt behavior.
-- URL HTML extraction, trafilatura fallback behavior, and URL briefing routing.
+- URL HTML extraction, Markdown mode, trafilatura fallback behavior, and URL
+  briefing routing.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Config-backed model resolution and `config init`.

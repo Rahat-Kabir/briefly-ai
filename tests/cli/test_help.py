@@ -60,8 +60,9 @@ def test_brief_prints_generated_result(monkeypatch) -> None:
 
 
 def test_url_briefing_extracts_then_generates(monkeypatch) -> None:
-    async def fake_extract_url(url: str):
+    async def fake_extract_url(url: str, **kwargs):
         assert url == "https://example.com"
+        assert kwargs["output_format"] == "text"
         return type(
             "Extracted",
             (),
@@ -89,6 +90,37 @@ def test_url_briefing_extracts_then_generates(monkeypatch) -> None:
 
     assert result.exit_code == 0
     assert result.output == "Generated URL brief.\n"
+
+
+def test_url_briefing_can_use_markdown_input(monkeypatch) -> None:
+    async def fake_extract_url(url: str, **kwargs):
+        assert kwargs["output_format"] == "markdown"
+        return type(
+            "Extracted",
+            (),
+            {
+                "source": "https://example.com/final",
+                "title": "Example Domain",
+                "text": "# Heading\n\nA [link](https://example.com).",
+            },
+        )()
+
+    async def fake_generate_brief(request):
+        assert request.options.output_format == "markdown"
+        assert request.text == "Example Domain\n\n# Heading\n\nA [link](https://example.com)."
+        return type("Result", (), {"text": "Generated Markdown brief."})()
+
+    monkeypatch.setattr("briefly_cli.commands.brief.extract_url", fake_extract_url)
+    monkeypatch.setattr("briefly_cli.commands.brief.generate_brief", fake_generate_brief)
+
+    result = runner.invoke(
+        app,
+        ["https://example.com", "--model", "test/model", "--output-format", "markdown"],
+        color=False,
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Generated Markdown brief.\n"
 
 
 def test_root_validates_flags() -> None:

@@ -70,7 +70,7 @@ def test_configured_ttl_expires_url_cache(monkeypatch, tmp_path: Path) -> None:
     _write_config(tmp_path, {"cache": {"ttlDays": 1}})
     calls = 0
 
-    async def fake_extract_url(url: str):
+    async def fake_extract_url(url: str, **kwargs):
         nonlocal calls
         calls += 1
         return type(

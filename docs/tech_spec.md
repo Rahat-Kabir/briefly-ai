@@ -106,7 +106,8 @@ Current supported input kinds:
 `--extract-only` / `--extract` prints resolved text for literal, file, and stdin
 input. URL extract mode fetches HTML, removes non-content elements, extracts
 main text with trafilatura first, falls back to BeautifulSoup, and prints title
-plus page text.
+plus page text. `--output-format markdown` preserves Markdown-style headings
+and links where available.
 
 ## Cache
 
@@ -123,6 +124,8 @@ Current behavior:
 
 - URL extraction cache avoids repeated URL fetch/extract work.
 - Summary cache avoids repeated model calls for the same input/model/options.
+- URL cache keys include output format, so text and Markdown entries are
+  separate.
 - `--skip-cache` bypasses cache reads and writes.
 - URL entries expire after 7 days by default.
 - Summary entries expire after 30 days by default.
