@@ -5,8 +5,8 @@ sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
-LiteLLM. Config-backed model selection, HTML URL briefing, token streaming, and
-local cache are available.
+LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
+token streaming, and local cache are available.
 
 ## Usage
 
@@ -53,6 +53,8 @@ uv run briefly README.md --extract
 uv run briefly https://example.com --extract
 echo "Piped text" | uv run briefly - --extract
 ```
+
+URL extraction uses trafilatura first, with BeautifulSoup fallback.
 
 ### Options
 
@@ -129,7 +131,7 @@ briefly-ai/
 |-- tests/
 |   |-- cli/
 |   |   |-- conftest.py
-|   |   |-- test_cache.py
+|   |   |-- test_cache_cli.py
 |   |   |-- test_cache_commands.py
 |   |   |-- test_config_init.py
 |   |   |-- test_config_model.py

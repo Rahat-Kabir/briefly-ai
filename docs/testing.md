@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 90 passed
+pytest: 92 passed
 ruff: All checks passed
 ```
 
@@ -30,7 +30,7 @@ ruff: All checks passed
 tests/
   cli/
     conftest.py
-    test_cache.py
+    test_cache_cli.py
     test_cache_commands.py
     test_config_init.py
     test_config_model.py
@@ -53,7 +53,7 @@ tests/
 - Root input command routing.
 - Briefing request construction.
 - Length preset and output-format prompt behavior.
-- URL HTML extraction and URL briefing routing.
+- URL HTML extraction, trafilatura fallback behavior, and URL briefing routing.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Config-backed model resolution and `config init`.

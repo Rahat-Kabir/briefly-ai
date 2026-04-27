@@ -7,6 +7,7 @@ dependencies = [
   "beautifulsoup4>=4.12",
   "httpx>=0.28",
   "litellm>=1.0",
+  "trafilatura>=2.0",
 ]
 
 [build-system]

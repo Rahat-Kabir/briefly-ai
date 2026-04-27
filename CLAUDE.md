@@ -60,7 +60,7 @@ Built so far:
 - LiteLLM-backed briefing with explicit or configured `--model`.
 - `briefly config init --model <id>` for first-time config creation.
 - SQLite URL and summary cache with TTL, `cache stats`, and `cache clear`.
-- HTML URL extraction and URL briefing.
+- Trafilatura-first HTML URL extraction and URL briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, streaming, briefing requests, mocked LLM
@@ -136,7 +136,7 @@ briefly-ai/
 `-- tests/
     |-- cli/
     |   |-- conftest.py
-    |   |-- test_cache.py
+    |   |-- test_cache_cli.py
     |   |-- test_cache_commands.py
     |   |-- test_config_init.py
     |   |-- test_config_model.py
@@ -245,7 +245,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 90 passed
+pytest: 92 passed
 ruff: All checks passed
 ```
 

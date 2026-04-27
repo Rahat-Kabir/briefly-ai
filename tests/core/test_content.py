@@ -33,6 +33,36 @@ def test_extract_html_text_removes_non_content_elements() -> None:
     assert "ignore this" not in text
 
 
+def test_extract_html_text_uses_trafilatura_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "briefly_core.content._extract_trafilatura_text",
+        lambda html: "Main article text.",
+    )
+    monkeypatch.setattr(
+        "briefly_core.content._extract_trafilatura_title",
+        lambda html: "Article Title",
+    )
+
+    title, text = extract_html_text("<article>Article text.</article>")
+
+    assert title == "Article Title"
+    assert text == "Main article text."
+
+
+def test_extract_html_text_falls_back_when_trafilatura_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("briefly_core.content._extract_trafilatura_text", lambda html: "")
+    monkeypatch.setattr("briefly_core.content._extract_trafilatura_title", lambda html: None)
+
+    title, text = extract_html_text(
+        "<title>Fallback Title</title><main><p>Fallback text.</p></main>"
+    )
+
+    assert title == "Fallback Title"
+    assert text == "Fallback text."
+
+
 def test_extract_url_uses_fetcher_and_returns_content() -> None:
     async def fetcher(url: str) -> httpx.Response:
         request = httpx.Request("GET", url)

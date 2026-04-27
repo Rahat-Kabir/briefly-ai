@@ -6,6 +6,8 @@ import re
 
 import httpx
 from bs4 import BeautifulSoup
+from trafilatura import extract as trafilatura_extract
+from trafilatura import extract_metadata
 
 Fetcher = Callable[[str], Awaitable[httpx.Response]]
 
@@ -36,11 +38,47 @@ async def extract_url(url: str, *, fetcher: Fetcher | None = None) -> ExtractedC
 
 
 def extract_html_text(html: str) -> tuple[str | None, str]:
+    title = _extract_html_title(html) or _extract_trafilatura_title(html)
+    cleaned_html = _remove_non_content_elements(html)
+    text = _extract_trafilatura_text(cleaned_html)
+    if text:
+        return title, text
+
+    fallback_title, fallback_text = _extract_html_text_fallback(cleaned_html)
+    return title or fallback_title, fallback_text
+
+
+def _extract_trafilatura_text(html: str) -> str:
+    text = trafilatura_extract(html, include_comments=False)
+    if not isinstance(text, str):
+        return ""
+    return _clean_block_text(text)
+
+
+def _extract_trafilatura_title(html: str) -> str | None:
+    metadata = extract_metadata(html)
+    title = getattr(metadata, "title", None) if metadata else None
+    if not isinstance(title, str):
+        return None
+    return _clean_inline_text(title)
+
+
+def _extract_html_title(html: str) -> str | None:
+    soup = BeautifulSoup(html, "html.parser")
+    return _clean_inline_text(soup.title.get_text(" ", strip=True)) if soup.title else None
+
+
+def _remove_non_content_elements(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    for element in soup(["script", "style", "noscript"]):
+        element.decompose()
+    return str(soup)
+
+
+def _extract_html_text_fallback(html: str) -> tuple[str | None, str]:
     soup = BeautifulSoup(html, "html.parser")
 
     title = _clean_inline_text(soup.title.get_text(" ", strip=True)) if soup.title else None
-    for element in soup(["script", "style", "noscript"]):
-        element.decompose()
     for element in soup(["head", "title", "meta", "link"]):
         element.decompose()
 

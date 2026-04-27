@@ -2,6 +2,23 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.11 - Primary Article Extraction
+
+Why: make URL briefs cleaner by extracting main article text before fallback text scraping.
+
+Completed:
+
+- Added trafilatura as the primary HTML article extractor.
+- Kept BeautifulSoup extraction as fallback.
+- Preserved HTML title behavior and non-content element cleanup.
+- Added tests for primary extraction and fallback.
+
+Not built yet:
+
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.10 - Cache Storage
 
 Why: avoid repeated URL extraction and model calls for identical requests.

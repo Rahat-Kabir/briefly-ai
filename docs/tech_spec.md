@@ -104,8 +104,9 @@ Current supported input kinds:
 - Any other value is treated as literal text.
 
 `--extract-only` / `--extract` prints resolved text for literal, file, and stdin
-input. URL extract mode fetches HTML, removes non-content elements, and prints
-title plus page text.
+input. URL extract mode fetches HTML, removes non-content elements, extracts
+main text with trafilatura first, falls back to BeautifulSoup, and prints title
+plus page text.
 
 ## Cache
 
