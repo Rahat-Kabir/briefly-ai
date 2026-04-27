@@ -13,35 +13,35 @@ text, files, URLs, and later richer sources such as media and slides.
 ## Code Quality
 
 - **Fail Fast**: Do not swallow exceptions. Prefer a clear failure over silent
-  behavior. Only catch errors with a specific recovery plan.
+behavior. Only catch errors with a specific recovery plan.
 - **Senior Engineer Test**: Before writing, ask: "Would a senior engineer
-  delete this?" If yes, simplify.
+delete this?" If yes, simplify.
 - **Clean Up Orphans**: If you remove a function or variable, remove its unused
-  imports, tests, and dependencies too.
+imports, tests, and dependencies too.
 
 ## Global
 
 - `AGENTS.md` is the source of truth. `CLAUDE.md` must stay byte-identical.
-  Any edit to `AGENTS.md` must be mirrored to `CLAUDE.md` in the same change.
+Any edit to `AGENTS.md` must be mirrored to `CLAUDE.md` in the same change.
 - After adding a new file, tool, or feature, update `README.md` and the Project
-  Structure section in this file to reflect the change.
+Structure section in this file to reflect the change.
 - After code changes, update `docs/tech_spec.md` and `docs/progress.md` with
-  the decisions made in the session. Update `docs/testing.md` when test
-  workflow or coverage changes.
+the decisions made in the session. Update `docs/testing.md` when test
+workflow or coverage changes.
 - `docs/progress.md` is the per-feature dev log - one entry per completed
-  `vX.Y.Z`, with a one-line `Why:`.
+`vX.Y.Z`, with a one-line `Why:`.
 - `docs/RELEASE_v0.X.md` is a themed chapter note - write one only when the
-  middle version number bumps, such as the first `v0.3.0` release. It groups
-  the `v0.X.0 -> v0.X.N` entries from `progress.md` under user-facing
-  highlights. Once written, a release file is frozen.
+middle version number bumps, such as the first `v0.3.0` release. It groups
+the `v0.X.0 -> v0.X.N` entries from `progress.md` under user-facing
+highlights. Once written, a release file is frozen.
 - Bump the middle version (`0.X.0`) when starting a new theme/chapter, not for
-  every feature. Bump the patch version (`0.X.Y`) for each feature within the
-  chapter.
+every feature. Bump the patch version (`0.X.Y`) for each feature within the
+chapter.
 
 ## Workflow
 
 - **CLI First**: Every new feature should test in CLI first before UI. Create
-  `scripts/` or `tests/` using Python when needed.
+`scripts/` or `tests/` using Python when needed.
 - **Visual Debugging**: If a UI issue is complex, ask for a screenshot.
 
 ## Current Scope
@@ -52,7 +52,7 @@ Built so far:
 
 - Python `uv` workspace.
 - `briefly-core` package with config, flag parsing, input resolution, and
-  briefing request/LLM logic.
+briefing request/LLM logic.
 - `briefly-cli` package with the `briefly` command shell.
 - Root command shape: `briefly [input]`.
 - Extract mode for literal text, local files, and stdin.
@@ -61,12 +61,12 @@ Built so far:
 - `briefly config init --model <id>` for first-time config creation.
 - SQLite URL and summary cache with TTL, `cache stats`, and `cache clear`.
 - Trafilatura-first HTML URL extraction with text/Markdown output and URL
-  briefing.
+briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Structured `--json` output for extract and briefing results.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
-  mocked LLM behavior, flag parsing, input resolution, and config loading.
+mocked LLM behavior, flag parsing, input resolution, and config loading.
 - README and docs baseline.
 
 ## Product Naming
@@ -164,7 +164,7 @@ briefly-ai/
 - Core must not import CLI.
 - Keep modules small and add folders only when they contain real code.
 - Do not add daemon, LLM, extraction, or cache abstractions before their first
-  working slice exists.
+working slice exists.
 
 ## Config
 
@@ -260,7 +260,7 @@ ruff: All checks passed
 - Keep comments rare and only for non-obvious behavior.
 - Remove unused files, imports, and stale tests when renaming code.
 - Keep generated files out of the repo (`__pycache__`, `.venv`, `.uv-cache`,
-  coverage output, build output).
+coverage output, build output).
 
 ## Collaboration
 
@@ -273,3 +273,4 @@ Before large feature work:
 - Build it.
 - Run tests.
 - Describe what changed and what remains intentionally unbuilt.
+
