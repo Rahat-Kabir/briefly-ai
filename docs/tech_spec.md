@@ -55,6 +55,7 @@ Current root command flags include:
 - `--max-input-chars`
 - `--max-tokens`
 - `--skip-cache`
+- `--json`
 
 Some short-term aliases exist for convenience. Internal names should still use
 Briefly-native terms.
@@ -90,6 +91,8 @@ Current behavior:
 - `--stream on|off|auto` controls token streaming. `auto` streams when stdout
   is a TTY. Streaming uses `litellm.acompletion(stream=True)` and prints
   chunks as plain text.
+- `--json` prints structured input, extracted text, prompt, model, cache, and
+  summary fields. Streaming is disabled in JSON mode so stdout stays valid JSON.
 - Retries, provider presets, and cost reporting are deferred.
 
 ## Input Resolution

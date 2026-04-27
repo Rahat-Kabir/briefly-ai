@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 96 passed
+pytest: 101 passed
 ruff: All checks passed
 ```
 
@@ -36,6 +36,7 @@ tests/
     test_config_model.py
     test_extract.py
     test_help.py
+    test_json_output.py
     test_stream.py
   core/
     test_briefing.py
@@ -57,6 +58,8 @@ tests/
   briefing routing.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
+- Structured JSON output for extract mode, briefing mode, cache hits, and
+  stream-disabled JSON mode.
 - Config-backed model resolution and `config init`.
 - URL and summary cache behavior, TTL, stats, and clear.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.

@@ -63,9 +63,10 @@ Built so far:
 - Trafilatura-first HTML URL extraction with text/Markdown output and URL
   briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
+- Structured `--json` output for extract and briefing results.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
-- Tests for CLI help, extract mode, streaming, briefing requests, mocked LLM
-  behavior, flag parsing, input resolution, and config loading.
+- Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
+  mocked LLM behavior, flag parsing, input resolution, and config loading.
 - README and docs baseline.
 
 ## Product Naming
@@ -143,6 +144,7 @@ briefly-ai/
     |   |-- test_config_model.py
     |   |-- test_extract.py
     |   |-- test_help.py
+    |   |-- test_json_output.py
     |   `-- test_stream.py
     `-- core/
         |-- test_briefing.py
@@ -246,7 +248,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 96 passed
+pytest: 101 passed
 ruff: All checks passed
 ```
 

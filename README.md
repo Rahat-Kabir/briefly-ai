@@ -6,7 +6,7 @@ sources.
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
 LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
-token streaming, and local cache are available.
+token streaming, structured JSON output, and local cache are available.
 
 ## Usage
 
@@ -51,6 +51,7 @@ Extract mode resolves and prints input without an LLM call.
 uv run briefly "Some text" --extract
 uv run briefly README.md --extract
 uv run briefly https://example.com --extract
+uv run briefly https://example.com --extract --json
 echo "Piped text" | uv run briefly - --extract
 ```
 
@@ -72,6 +73,7 @@ uv run briefly --help
 | `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
 | `--max-tokens TEXT` | Maximum output tokens |
 | `--stream TEXT` | Streaming mode: `on`, `off`, or `auto` (TTY) |
+| `--json` | Print structured JSON; streaming is disabled in JSON mode |
 | `--skip-cache` | Skip cache reads and writes |
 
 ### Cache
@@ -136,6 +138,10 @@ briefly-ai/
 |   |   |-- test_cache_commands.py
 |   |   |-- test_config_init.py
 |   |   |-- test_config_model.py
+|   |   |-- test_extract.py
+|   |   |-- test_help.py
+|   |   |-- test_json_output.py
+|   |   `-- test_stream.py
 |   `-- core/
 |       |-- test_cache.py
 `-- uv.lock

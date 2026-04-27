@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 
 import click
 
@@ -32,6 +33,7 @@ from briefly_core.llm import generate_brief, generate_brief_stream
 @click.option("--length", default="medium", help="Brief length preset or character count.")
 @click.option("--model", default=None, help="Model id or configured model preset.")
 @click.option("--stream", default="auto", help="Streaming mode: auto, on, or off.")
+@click.option("--json", "json_output", is_flag=True, help="Output structured JSON.")
 @click.option(
     "--max-input-chars",
     "--max-extract-characters",
@@ -47,6 +49,7 @@ def brief(
     length: str,
     model: str | None,
     stream: str,
+    json_output: bool,
     max_input_chars: str | None,
     max_tokens: str | None,
     skip_cache: bool,
@@ -85,6 +88,25 @@ def brief(
             )
         except Exception as error:
             raise click.ClickException(str(error)) from error
+        if json_output:
+            _echo_json(
+                {
+                    "input": _input_payload(
+                        resolved_input,
+                        output_format=parsed_output_format,
+                        length=parsed_length,
+                        max_input_chars=parsed_max_input_chars,
+                        max_output_tokens=parsed_max_tokens,
+                        model=None,
+                    ),
+                    "extracted": _resolved_input_payload(extracted_input),
+                    "prompt": None,
+                    "llm": None,
+                    "cache": {"enabled": not skip_cache},
+                    "summary": None,
+                }
+            )
+            return
         extracted_text = extracted_input.text or ""
         click.echo(extracted_text, nl=not extracted_text.endswith("\n"))
         return
@@ -113,10 +135,23 @@ def brief(
     if not skip_cache:
         cached_summary = _get_summary_cache(briefing_request, _cache_ttl_days(config))
         if cached_summary is not None:
+            if json_output:
+                _echo_json(
+                    _briefing_payload(
+                        resolved_input=resolved_input,
+                        extracted_input=resolved_briefing_input,
+                        briefing_request=briefing_request,
+                        summary=cached_summary.text,
+                        model=briefing_request.options.model,
+                        cache_enabled=True,
+                        summary_cache_hit=True,
+                    )
+                )
+                return
             click.echo(cached_summary.text)
             return
 
-    if _should_stream(parsed_stream_mode):
+    if not json_output and _should_stream(parsed_stream_mode):
         try:
             streamed_text = asyncio.run(_run_stream(briefing_request))
             if not skip_cache:
@@ -132,6 +167,20 @@ def brief(
 
     if not skip_cache:
         set_summary_cache(briefing_request, briefing_result.text)
+
+    if json_output:
+        _echo_json(
+            _briefing_payload(
+                resolved_input=resolved_input,
+                extracted_input=resolved_briefing_input,
+                briefing_request=briefing_request,
+                summary=briefing_result.text,
+                model=getattr(briefing_result, "model", briefing_request.options.model),
+                cache_enabled=not skip_cache,
+                summary_cache_hit=False,
+            )
+        )
+        return
 
     click.echo(briefing_result.text)
 
@@ -251,3 +300,71 @@ def _resolved_url_input(extracted: ExtractedContent) -> ResolvedInput:
     else:
         text = extracted.text
     return ResolvedInput(kind="url", source=extracted.source, text=text)
+
+
+def _briefing_payload(
+    *,
+    resolved_input: ResolvedInput,
+    extracted_input: ResolvedInput,
+    briefing_request,
+    summary: str,
+    model: str | None,
+    cache_enabled: bool,
+    summary_cache_hit: bool,
+) -> dict[str, object]:
+    return {
+        "input": _input_payload(
+            resolved_input,
+            output_format=briefing_request.options.output_format,
+            length=briefing_request.options.length,
+            max_input_chars=briefing_request.options.max_input_chars,
+            max_output_tokens=briefing_request.options.max_output_tokens,
+            model=briefing_request.options.model,
+        ),
+        "extracted": _resolved_input_payload(extracted_input),
+        "prompt": briefing_request.prompt,
+        "llm": {"model": model},
+        "cache": {
+            "enabled": cache_enabled,
+            "summaryHit": summary_cache_hit,
+        },
+        "summary": summary,
+    }
+
+
+def _input_payload(
+    resolved_input: ResolvedInput,
+    *,
+    output_format: str,
+    length,
+    max_input_chars: int | None,
+    max_output_tokens: int | None,
+    model: str | None,
+) -> dict[str, object]:
+    return {
+        "kind": resolved_input.kind,
+        "source": resolved_input.source,
+        "format": output_format,
+        "length": _length_payload(length),
+        "maxInputChars": max_input_chars,
+        "maxOutputTokens": max_output_tokens,
+        "model": model,
+    }
+
+
+def _length_payload(length) -> dict[str, object]:
+    if length.kind == "preset":
+        return {"kind": "preset", "preset": length.preset}
+    return {"kind": "chars", "maxCharacters": length.max_characters}
+
+
+def _resolved_input_payload(resolved_input: ResolvedInput) -> dict[str, object]:
+    return {
+        "kind": resolved_input.kind,
+        "source": resolved_input.source,
+        "text": resolved_input.text,
+    }
+
+
+def _echo_json(payload: dict[str, object]) -> None:
+    click.echo(json.dumps(payload, indent=2, ensure_ascii=False))

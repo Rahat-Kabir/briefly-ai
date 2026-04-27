@@ -2,6 +2,24 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.1.13 - Structured JSON Output
+
+Why: make CLI extract and briefing results easier to test and consume from tools.
+
+Completed:
+
+- Added `--json` to the root briefing command.
+- Returned structured input, extracted text, prompt, LLM, cache, and summary
+  fields for JSON output.
+- Disabled token streaming in JSON mode so stdout stays valid JSON.
+- Added CLI tests for extract JSON, briefing JSON, cache hits, and stream mode.
+
+Not built yet:
+
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.12 - Markdown URL Extraction
 
 Why: preserve useful article structure such as headings and links during URL extraction.

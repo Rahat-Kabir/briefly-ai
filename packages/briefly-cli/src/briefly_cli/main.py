@@ -31,6 +31,7 @@ class BrieflyGroup(click.Group):
                         "Maximum extracted input characters, e.g. 50k.",
                     ),
                     ("--max-tokens, --max-output-tokens TEXT", "Maximum output tokens."),
+                    ("--json", "Output structured JSON."),
                     ("--skip-cache, --no-cache", "Skip cache."),
                 ]
             )
