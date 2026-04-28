@@ -24,6 +24,14 @@ from briefly_core.flags import (
 )
 from briefly_core.input import ResolvedInput, resolve_input_target
 from briefly_core.llm import generate_brief, generate_brief_stream
+from briefly_core.youtube import (
+    fetch_youtube_transcript,
+    is_youtube_url,
+    transcript_to_extracted_content,
+)
+
+_YOUTUBE_CACHE_KIND = "youtube_transcript"
+_YOUTUBE_CACHE_FORMAT = "text"
 
 
 @click.command(hidden=True)
@@ -210,10 +218,25 @@ def _get_summary_cache(request, cache_ttl_days: float | None):
     return get_summary_cache(request, ttl_days=cache_ttl_days)
 
 
-def _get_url_cache(requested_url: str, output_format: str, cache_ttl_days: float | None):
+def _get_url_cache(
+    requested_url: str,
+    output_format: str,
+    cache_ttl_days: float | None,
+    *,
+    cache_kind: str = "url_extract",
+):
     if cache_ttl_days is None:
-        return get_url_cache(requested_url, output_format=output_format)
-    return get_url_cache(requested_url, output_format=output_format, ttl_days=cache_ttl_days)
+        return get_url_cache(
+            requested_url,
+            output_format=output_format,
+            cache_kind=cache_kind,
+        )
+    return get_url_cache(
+        requested_url,
+        output_format=output_format,
+        ttl_days=cache_ttl_days,
+        cache_kind=cache_kind,
+    )
 
 
 def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
@@ -279,6 +302,13 @@ async def _resolve_extractable_input(
     cache_ttl_days: float | None = None,
 ) -> ResolvedInput:
     if resolved_input.kind == "url":
+        if is_youtube_url(resolved_input.source):
+            return await _resolve_youtube_input(
+                resolved_input.source,
+                skip_cache=skip_cache,
+                cache_ttl_days=cache_ttl_days,
+            )
+
         if not skip_cache:
             cached_url = _get_url_cache(resolved_input.source, output_format, cache_ttl_days)
             if cached_url is not None:
@@ -292,6 +322,34 @@ async def _resolve_extractable_input(
     if resolved_input.text is None:
         raise ValueError("Input did not resolve to text.")
     return resolved_input
+
+
+async def _resolve_youtube_input(
+    url: str,
+    *,
+    skip_cache: bool,
+    cache_ttl_days: float | None,
+) -> ResolvedInput:
+    if not skip_cache:
+        cached = _get_url_cache(
+            url,
+            _YOUTUBE_CACHE_FORMAT,
+            cache_ttl_days,
+            cache_kind=_YOUTUBE_CACHE_KIND,
+        )
+        if cached is not None:
+            return _resolved_url_input(cached)
+
+    transcript = await fetch_youtube_transcript(url)
+    extracted = transcript_to_extracted_content(transcript, source_url=url)
+    if not skip_cache:
+        set_url_cache(
+            url,
+            extracted,
+            output_format=_YOUTUBE_CACHE_FORMAT,
+            cache_kind=_YOUTUBE_CACHE_KIND,
+        )
+    return _resolved_url_input(extracted)
 
 
 def _resolved_url_input(extracted: ExtractedContent) -> ResolvedInput:
