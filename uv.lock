@@ -220,7 +220,7 @@ dev = [
 
 [[package]]
 name = "briefly-cli"
-version = "0.1.6"
+version = "0.2.0"
 source = { editable = "packages/briefly-cli" }
 dependencies = [
     { name = "briefly-core" },
@@ -235,7 +235,7 @@ requires-dist = [
 
 [[package]]
 name = "briefly-core"
-version = "0.1.6"
+version = "0.2.0"
 source = { editable = "packages/briefly-core" }
 dependencies = [
     { name = "beautifulsoup4" },

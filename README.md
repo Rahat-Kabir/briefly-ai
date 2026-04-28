@@ -6,7 +6,8 @@ sources.
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
 LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
-token streaming, structured JSON output, and local cache are available.
+YouTube caption briefing, token streaming, structured JSON output, and local
+cache are available.
 
 ## Usage
 
@@ -42,6 +43,18 @@ This writes `~/.briefly/config.json` and refuses to overwrite it unless
 ```bash
 uv run briefly notes.txt --model openai/gpt-4o-mini
 ```
+
+### Brief a YouTube video
+
+```bash
+uv run briefly https://youtu.be/v4F1gFy-hqg --model openai/gpt-4o-mini
+uv run briefly https://www.youtube.com/watch?v=v4F1gFy-hqg --extract
+uv run briefly https://youtu.be/v4F1gFy-hqg --extract --json
+```
+
+Briefly fetches the video's captions through YouTube's Android InnerTube API.
+Works for `youtube.com`, `youtu.be`, `/shorts`, `/embed`, and `/live` URLs.
+Videos without captions are not supported yet.
 
 ### Extract mode
 
@@ -124,7 +137,8 @@ briefly-ai/
 |   |       |-- config.py
 |   |       |-- flags.py
 |   |       |-- input.py
-|   |       `-- llm.py
+|   |       |-- llm.py
+|   |       `-- youtube.py
 |   `-- briefly-cli/
 |       `-- src/briefly_cli/
 |           |-- main.py

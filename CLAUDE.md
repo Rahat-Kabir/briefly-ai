@@ -64,6 +64,8 @@ briefing request/LLM logic.
 briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Structured `--json` output for extract and briefing results.
+- YouTube caption briefing through the Android InnerTube player API, with
+clean transcript text and a separate cache slot.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
 mocked LLM behavior, flag parsing, input resolution, and config loading.
@@ -119,7 +121,8 @@ briefly-ai/
 |   |       |-- config.py
 |   |       |-- flags.py
 |   |       |-- input.py
-|   |       `-- llm.py
+|   |       |-- llm.py
+|   |       `-- youtube.py
 |   |
 |   `-- briefly-cli/
 |       |-- pyproject.toml
@@ -145,7 +148,8 @@ briefly-ai/
     |   |-- test_extract.py
     |   |-- test_help.py
     |   |-- test_json_output.py
-    |   `-- test_stream.py
+    |   |-- test_stream.py
+    |   `-- test_youtube_cli.py
     `-- core/
         |-- test_briefing.py
         |-- test_cache.py
@@ -153,7 +157,8 @@ briefly-ai/
         |-- test_config.py
         |-- test_flags.py
         |-- test_input.py
-        `-- test_llm.py
+        |-- test_llm.py
+        `-- test_youtube.py
 ```
 
 ## Architecture Rules

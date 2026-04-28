@@ -112,6 +112,35 @@ main text with trafilatura first, falls back to BeautifulSoup, and prints title
 plus page text. `--output-format markdown` preserves Markdown-style headings
 and links where available.
 
+## YouTube
+
+YouTube URLs (`youtube.com`, `youtu.be`, `youtube-nocookie.com`) are routed to a
+captions extractor instead of the HTML extractor.
+
+Flow:
+
+- Parse the video id from `watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, or
+  `/live/` URLs.
+- POST to `youtubei/v1/player` as the Android client with a hardcoded public
+  InnerTube key. Skips the watch page so YouTube's bot detection on `/watch`
+  does not block the request.
+- Pick a caption track: manual before auto-generated, English first, dedupe by
+  language.
+- Strip `fmt=srv3` from the caption `baseUrl` so YouTube serves the older XML
+  format with `<text>` elements.
+- Parse XML segments and run `html.unescape` to decode double-encoded entities.
+- Return a `YoutubeTranscript` with title, language, segments, and joined text.
+
+Watch-page fallback runs only when the Android call returns no captions. It
+scrapes a fresh `INNERTUBE_API_KEY` and retries, in case the hardcoded key is
+ever rotated.
+
+Cache uses a separate `youtube_transcript` slot from regular URL extraction so
+future YouTube extractor changes do not collide with HTML article entries.
+
+Failures raise clear errors: unsupported URL, no captions available, empty
+caption track, missing caption URL.
+
 ## Cache
 
 Briefly stores cache data in:

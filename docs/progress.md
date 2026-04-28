@@ -2,6 +2,29 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.2.0 - YouTube Captions
+
+Why: brief YouTube videos directly using their captions, without scraping the
+watch page.
+
+Completed:
+
+- Added `briefly_core/youtube.py`: URL detection, video-id parsing, Android
+  InnerTube player call, caption track picker, XML parsing, orchestrator.
+- Routed YouTube URLs through the new extractor with their own cache slot.
+- Stripped `fmt=srv3` from caption URLs so the parser gets the `<text>` format.
+- Decoded double-encoded HTML entities so transcript output is clean.
+- Watch-page fallback only when the hardcoded Android key returns no captions.
+- Added 23 core tests and 5 CLI tests.
+
+Not built yet:
+
+- yt-dlp + audio transcription for videos without captions.
+- `--timestamps`, `--language`, `--youtube` mode flag.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.1.13 - Structured JSON Output
 
 Why: make CLI extract and briefing results easier to test and consume from tools.
