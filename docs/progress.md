@@ -2,6 +2,24 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.3.1 - PDF URL Input
+
+Why: let remote PDF links use the same text extraction path as local PDFs.
+
+Completed:
+
+- Added `extract_pdf_bytes` so PDF extraction can run from downloaded bytes.
+- Routed URL responses with `application/pdf` through pdfplumber.
+- Routed `.pdf` response URLs through pdfplumber even with generic content type.
+- Added URL filename title fallback when PDF metadata has no title.
+- Added tests for PDF content type, generic `.pdf` URL, and empty PDF errors.
+
+Not built yet:
+
+- Native OpenAI PDF attachment for higher-fidelity briefing.
+- OCR for scanned/image-only PDFs.
+- Word/Excel/PowerPoint document input.
+
 ## v0.3.0 - PDF Input
 
 Why: brief local PDF files using their text layer.

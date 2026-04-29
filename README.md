@@ -45,10 +45,12 @@ This writes `~/.briefly/config.json` and refuses to overwrite it unless
 uv run briefly notes.txt --model openai/gpt-4o-mini
 uv run briefly paper.pdf --model openai/gpt-4o-mini
 uv run briefly paper.pdf --extract
+uv run briefly https://example.com/paper.pdf --extract
 ```
 
-PDF input uses pdfplumber; the title comes from PDF metadata when present,
-otherwise the filename. Scanned/image-only PDFs raise a clear error.
+Local and remote PDF input uses pdfplumber; the title comes from PDF metadata
+when present, otherwise the filename or URL. Scanned/image-only PDFs raise a
+clear error.
 
 ### Brief a YouTube video
 

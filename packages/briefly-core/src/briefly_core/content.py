@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 import re
 from typing import Literal
+from urllib.parse import unquote
 
 import httpx
 from bs4 import BeautifulSoup
@@ -34,6 +35,15 @@ async def extract_url(
 ) -> ExtractedContent:
     response = await _fetch_url(url, fetcher)
     content_type = response.headers.get("content-type", "")
+    if _is_pdf_response(response, content_type):
+        from briefly_core.pdf import extract_pdf_bytes
+
+        return extract_pdf_bytes(
+            response.content,
+            source=str(response.url),
+            title_hint=_title_hint_from_url(str(response.url)),
+        )
+
     if "text/html" not in content_type.lower():
         raise ValueError(f"URL did not return HTML content: {content_type or 'unknown'}")
 
@@ -43,6 +53,23 @@ async def extract_url(
         raise ValueError("URL did not contain extractable text.")
 
     return ExtractedContent(source=str(response.url), title=title, text=text)
+
+
+def _is_pdf_response(response: httpx.Response, content_type: str) -> bool:
+    normalized_type = content_type.lower()
+    if "application/pdf" in normalized_type:
+        return True
+    return str(response.url.path).lower().endswith(".pdf")
+
+
+def _title_hint_from_url(url: str) -> str | None:
+    path = httpx.URL(url).path
+    name = unquote(path.rsplit("/", 1)[-1])
+    if not name:
+        return None
+    stem = name.rsplit(".", 1)[0] if "." in name else name
+    cleaned = _clean_inline_text(stem.replace("-", " ").replace("_", " "))
+    return cleaned
 
 
 def extract_html_text(html: str, *, output_format: ContentFormat = "text") -> tuple[str | None, str]:

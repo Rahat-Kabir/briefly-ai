@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 148 passed
+pytest: 151 passed
 ruff: All checks passed
 ```
 
@@ -66,6 +66,7 @@ tests/
 - PDF text extraction via pdfplumber, metadata title fallback, multi-page
   joining, empty-PDF error, and CLI cache hit / mtime invalidation /
   `--skip-cache` paths.
+- Remote PDF URL extraction by content type or `.pdf` URL path.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Structured JSON output for extract mode, briefing mode, cache hits, and

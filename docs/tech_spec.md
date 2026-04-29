@@ -157,8 +157,7 @@ caption track, missing caption URL.
 
 ## PDF
 
-Local `.pdf` paths resolve to a `pdf` input kind and are routed through
-pdfplumber.
+Local `.pdf` paths and remote PDF URLs are routed through pdfplumber.
 
 Flow:
 
@@ -169,10 +168,16 @@ Flow:
 - Title comes from PDF `/Info` metadata when present, otherwise the filename
   stem.
 - Empty/scanned PDFs raise `ValueError("PDF contained no extractable text")`.
+- URL extraction detects PDFs from `Content-Type: application/pdf` or a `.pdf`
+  response URL path before the HTML-only branch.
+- Remote PDFs use `extract_pdf_bytes` and fall back to a title hint from the
+  URL filename when metadata has no title.
 
 Cache uses `cache_kind="pdf_extract"` with the absolute path as the key and
 `text:<mtime_ns>` as the format slot, so editing the PDF invalidates the
 cache without manual flushing.
+
+Remote PDFs use the normal URL extraction cache key and output format slot.
 
 ## Cache
 

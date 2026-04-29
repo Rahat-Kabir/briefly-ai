@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -14,14 +15,32 @@ _BLANK_LINES_PATTERN = re.compile(r"\n{3,}")
 
 def extract_pdf(path: Path) -> ExtractedContent:
     with pdfplumber.open(str(path)) as pdf:
-        pages = [_clean_page_text(page.extract_text() or "") for page in pdf.pages]
-        title = _pdf_title(pdf.metadata, path)
+        return _extract_open_pdf(pdf, source=str(path), title_hint=path.stem or None)
 
+
+def extract_pdf_bytes(
+    data: bytes,
+    *,
+    source: str,
+    title_hint: str | None = None,
+) -> ExtractedContent:
+    with pdfplumber.open(BytesIO(data)) as pdf:
+        return _extract_open_pdf(pdf, source=source, title_hint=title_hint)
+
+
+def _extract_open_pdf(
+    pdf,
+    *,
+    source: str,
+    title_hint: str | None,
+) -> ExtractedContent:
+    pages = [_clean_page_text(page.extract_text() or "") for page in pdf.pages]
+    title = _pdf_title(pdf.metadata, title_hint=title_hint)
     text = _BLANK_LINES_PATTERN.sub("\n\n", "\n\n".join(part for part in pages if part)).strip()
     if not text:
-        raise ValueError(f"PDF contained no extractable text: {path}")
+        raise ValueError(f"PDF contained no extractable text: {source}")
 
-    return ExtractedContent(source=str(path), title=title, text=text)
+    return ExtractedContent(source=source, title=title, text=text)
 
 
 def _clean_page_text(text: str) -> str:
@@ -29,11 +48,11 @@ def _clean_page_text(text: str) -> str:
     return "\n".join(line for line in lines if line)
 
 
-def _pdf_title(metadata: Mapping[str, Any] | None, path: Path) -> str | None:
+def _pdf_title(metadata: Mapping[str, Any] | None, *, title_hint: str | None) -> str | None:
     if metadata:
         raw_title = metadata.get("Title")
         if isinstance(raw_title, str):
             cleaned = _WHITESPACE_PATTERN.sub(" ", raw_title).strip()
             if cleaned:
                 return cleaned
-    return path.stem or None
+    return title_hint
