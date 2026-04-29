@@ -19,8 +19,11 @@ def _make_transcript() -> YoutubeTranscript:
         title="Demo Video",
         language_code="en",
         is_auto_generated=False,
-        text="Hello world from a test.",
-        segments=(CaptionSegment(start_ms=0, duration_ms=2000, text="Hello world from a test."),),
+        text="Hello world from a test. Later point.",
+        segments=(
+            CaptionSegment(start_ms=0, duration_ms=2000, text="Hello world from a test."),
+            CaptionSegment(start_ms=61_000, duration_ms=2000, text="Later point."),
+        ),
     )
 
 
@@ -38,7 +41,16 @@ def test_extract_youtube_url(monkeypatch: pytest.MonkeyPatch) -> None:
     result = runner.invoke(app, [_VIDEO_URL, "--extract"], color=False)
 
     assert result.exit_code == 0, result.output
-    assert result.output == "Demo Video\n\nHello world from a test.\n"
+    assert result.output == "Demo Video\n\nHello world from a test. Later point.\n"
+
+
+def test_extract_youtube_url_with_timestamps(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_transcript(monkeypatch, _make_transcript())
+
+    result = runner.invoke(app, [_VIDEO_URL, "--extract", "--timestamps"], color=False)
+
+    assert result.exit_code == 0, result.output
+    assert result.output == "Demo Video\n\n[0:00] Hello world from a test.\n[1:01] Later point.\n"
 
 
 def test_extract_youtube_url_json(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -53,8 +65,19 @@ def test_extract_youtube_url_json(monkeypatch: pytest.MonkeyPatch) -> None:
     assert payload["extracted"]["kind"] == "url"
     assert payload["extracted"]["source"] == _VIDEO_URL
     assert "Demo Video" in payload["extracted"]["text"]
-    assert "Hello world from a test." in payload["extracted"]["text"]
+    assert "Hello world from a test. Later point." in payload["extracted"]["text"]
     assert payload["summary"] is None
+
+
+def test_extract_youtube_url_json_with_timestamps(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_transcript(monkeypatch, _make_transcript())
+
+    result = runner.invoke(app, [_VIDEO_URL, "--extract", "--json", "--timestamps"], color=False)
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert "[0:00] Hello world from a test." in payload["extracted"]["text"]
+    assert "[1:01] Later point." in payload["extracted"]["text"]
 
 
 def test_briefing_youtube_url(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -110,3 +133,26 @@ def test_youtube_url_uses_separate_cache_slot(monkeypatch: pytest.MonkeyPatch) -
 
     assert fetch_calls["count"] == 1
     assert first.output == second.output
+
+
+def test_youtube_timestamps_use_separate_cache_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    transcript = _make_transcript()
+    fetch_calls = {"count": 0}
+
+    async def fake_fetch(url: str, **kwargs):
+        fetch_calls["count"] += 1
+        return transcript
+
+    monkeypatch.setattr("briefly_cli.commands.brief.fetch_youtube_transcript", fake_fetch)
+
+    plain = runner.invoke(app, [_VIDEO_URL, "--extract"], color=False)
+    assert plain.exit_code == 0, plain.output
+    timestamped = runner.invoke(app, [_VIDEO_URL, "--extract", "--timestamps"], color=False)
+    assert timestamped.exit_code == 0, timestamped.output
+    timestamped_again = runner.invoke(app, [_VIDEO_URL, "--extract", "--timestamps"], color=False)
+    assert timestamped_again.exit_code == 0, timestamped_again.output
+
+    assert fetch_calls["count"] == 2
+    assert "[0:00]" not in plain.output
+    assert "[0:00]" in timestamped.output
+    assert timestamped.output == timestamped_again.output

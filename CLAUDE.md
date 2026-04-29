@@ -106,6 +106,7 @@ briefly-ai/
 |-- README.md
 |
 |-- docs/
+|   |-- RELEASE_v0.2.md
 |   |-- progress.md
 |   |-- tech_spec.md
 |   `-- testing.md
@@ -278,4 +279,3 @@ Before large feature work:
 - Build it.
 - Run tests.
 - Describe what changed and what remains intentionally unbuilt.
-

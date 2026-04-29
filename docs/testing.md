@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 101 passed
+pytest: 134 passed
 ruff: All checks passed
 ```
 
@@ -38,6 +38,7 @@ tests/
     test_help.py
     test_json_output.py
     test_stream.py
+    test_youtube_cli.py
   core/
     test_briefing.py
     test_cache.py
@@ -46,6 +47,7 @@ tests/
     test_flags.py
     test_input.py
     test_llm.py
+    test_youtube.py
 ```
 
 ## What Is Covered
@@ -56,6 +58,8 @@ tests/
 - Length preset and output-format prompt behavior.
 - URL HTML extraction, Markdown mode, trafilatura fallback behavior, and URL
   briefing routing.
+- YouTube captions, transcript formatting, timestamps, JSON output, and cache
+  separation.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Structured JSON output for extract mode, briefing mode, cache hits, and
@@ -73,9 +77,9 @@ tests/
 ## What Is Not Covered Yet
 
 - Live LLM calls.
+- Live YouTube/network behavior.
 - Non-HTML content extraction.
 - Daemon routes.
 - Slides/transcription behavior.
-- Live network behavior.
 
 Do not add live network tests to the default test suite.

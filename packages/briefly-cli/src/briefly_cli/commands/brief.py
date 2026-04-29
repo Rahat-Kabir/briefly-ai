@@ -42,6 +42,7 @@ _YOUTUBE_CACHE_FORMAT = "text"
 @click.option("--model", default=None, help="Model id or configured model preset.")
 @click.option("--stream", default="auto", help="Streaming mode: auto, on, or off.")
 @click.option("--json", "json_output", is_flag=True, help="Output structured JSON.")
+@click.option("--timestamps", is_flag=True, help="Include transcript timestamps when available.")
 @click.option(
     "--max-input-chars",
     "--max-extract-characters",
@@ -58,6 +59,7 @@ def brief(
     model: str | None,
     stream: str,
     json_output: bool,
+    timestamps: bool,
     max_input_chars: str | None,
     max_tokens: str | None,
     skip_cache: bool,
@@ -92,6 +94,7 @@ def brief(
                     output_format=parsed_output_format,
                     skip_cache=skip_cache,
                     cache_ttl_days=_cache_ttl_days(config),
+                    timestamps=timestamps,
                 )
             )
         except Exception as error:
@@ -126,6 +129,7 @@ def brief(
                 output_format=parsed_output_format,
                 skip_cache=skip_cache,
                 cache_ttl_days=_cache_ttl_days(config),
+                timestamps=timestamps,
             )
         )
         resolved_model = _resolve_model(model, config)
@@ -300,6 +304,7 @@ async def _resolve_extractable_input(
     output_format: str = "text",
     skip_cache: bool = False,
     cache_ttl_days: float | None = None,
+    timestamps: bool = False,
 ) -> ResolvedInput:
     if resolved_input.kind == "url":
         if is_youtube_url(resolved_input.source):
@@ -307,6 +312,7 @@ async def _resolve_extractable_input(
                 resolved_input.source,
                 skip_cache=skip_cache,
                 cache_ttl_days=cache_ttl_days,
+                timestamps=timestamps,
             )
 
         if not skip_cache:
@@ -329,11 +335,13 @@ async def _resolve_youtube_input(
     *,
     skip_cache: bool,
     cache_ttl_days: float | None,
+    timestamps: bool,
 ) -> ResolvedInput:
+    output_format = _youtube_cache_format(timestamps)
     if not skip_cache:
         cached = _get_url_cache(
             url,
-            _YOUTUBE_CACHE_FORMAT,
+            output_format,
             cache_ttl_days,
             cache_kind=_YOUTUBE_CACHE_KIND,
         )
@@ -341,15 +349,23 @@ async def _resolve_youtube_input(
             return _resolved_url_input(cached)
 
     transcript = await fetch_youtube_transcript(url)
-    extracted = transcript_to_extracted_content(transcript, source_url=url)
+    extracted = transcript_to_extracted_content(
+        transcript,
+        source_url=url,
+        timestamps=timestamps,
+    )
     if not skip_cache:
         set_url_cache(
             url,
             extracted,
-            output_format=_YOUTUBE_CACHE_FORMAT,
+            output_format=output_format,
             cache_kind=_YOUTUBE_CACHE_KIND,
         )
     return _resolved_url_input(extracted)
+
+
+def _youtube_cache_format(timestamps: bool) -> str:
+    return "text-timestamps" if timestamps else _YOUTUBE_CACHE_FORMAT
 
 
 def _resolved_url_input(extracted: ExtractedContent) -> ResolvedInput:

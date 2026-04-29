@@ -2,6 +2,25 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.2.1 - YouTube Timestamps
+
+Why: let users keep video timing while extracting or briefing YouTube captions.
+
+Completed:
+
+- Added `--timestamps` to the root briefing command.
+- Formatted YouTube transcript segments as `[m:ss]` or `[h:mm:ss]` lines.
+- Kept plain and timestamped YouTube transcript cache entries separate.
+- Added core, CLI, JSON, help, and cache tests for timestamped transcripts.
+
+Not built yet:
+
+- `--language` and `--youtube` mode flag.
+- yt-dlp + audio transcription for videos without captions.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.2.0 - YouTube Captions
 
 Why: brief YouTube videos directly using their captions, without scraping the
@@ -20,7 +39,7 @@ Completed:
 Not built yet:
 
 - yt-dlp + audio transcription for videos without captions.
-- `--timestamps`, `--language`, `--youtube` mode flag.
+- `--language`, `--youtube` mode flag.
 - Daemon server.
 - Browser extension integration.
 - Slides/transcription implementation.

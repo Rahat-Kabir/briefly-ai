@@ -11,6 +11,7 @@ def test_root_help() -> None:
     assert "Create concise briefs from text, files, and URLs." in result.output
     assert "--extract-only" in result.output
     assert "--max-input-chars" in result.output
+    assert "--timestamps" in result.output
     assert "cache" in result.output
     assert "config" in result.output
     assert "slides" in result.output

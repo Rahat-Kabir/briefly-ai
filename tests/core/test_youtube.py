@@ -8,6 +8,7 @@ import pytest
 
 from briefly_core.youtube import (
     CaptionSegment,
+    YoutubeTranscript,
     extract_initial_player_response,
     extract_innertube_api_key,
     fetch_youtube_transcript,
@@ -15,6 +16,7 @@ from briefly_core.youtube import (
     parse_caption_xml,
     parse_video_id,
     pick_caption_track,
+    transcript_to_text,
 )
 from briefly_core.youtube import _normalize_caption_url
 
@@ -204,6 +206,26 @@ def test_parse_caption_xml_strips_inline_tags() -> None:
     xml = '<transcript><text start="0" dur="1">a <b>bold</b> word</text></transcript>'
     segments = parse_caption_xml(xml)
     assert segments == (CaptionSegment(start_ms=0, duration_ms=1000, text="a bold word"),)
+
+
+def test_transcript_to_text_can_include_timestamps() -> None:
+    transcript = YoutubeTranscript(
+        video_id="dQw4w9WgXcQ",
+        title="Demo Video",
+        language_code="en",
+        is_auto_generated=False,
+        text="Intro Deep point Later point",
+        segments=(
+            CaptionSegment(start_ms=0, duration_ms=1200, text="Intro"),
+            CaptionSegment(start_ms=61_000, duration_ms=1000, text="Deep point"),
+            CaptionSegment(start_ms=3_661_000, duration_ms=1000, text="Later point"),
+        ),
+    )
+
+    assert transcript_to_text(transcript) == "Intro Deep point Later point"
+    assert transcript_to_text(transcript, timestamps=True) == (
+        "[0:00] Intro\n[1:01] Deep point\n[1:01:01] Later point"
+    )
 
 
 def _make_client(handler) -> httpx.AsyncClient:

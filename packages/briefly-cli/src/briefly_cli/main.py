@@ -26,6 +26,7 @@ class BrieflyGroup(click.Group):
                     ("--length TEXT", "Brief length preset or character count."),
                     ("--model TEXT", "Model id or configured model preset."),
                     ("--stream TEXT", "Streaming mode: auto, on, or off."),
+                    ("--timestamps", "Include transcript timestamps when available."),
                     (
                         "--max-input-chars, --max-extract-characters TEXT",
                         "Maximum extracted input characters, e.g. 50k.",

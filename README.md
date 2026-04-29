@@ -7,7 +7,8 @@ Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
 LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
 YouTube caption briefing, token streaming, structured JSON output, and local
-cache are available.
+cache are available. YouTube transcript timestamps are available in extract and
+briefing input.
 
 ## Usage
 
@@ -49,12 +50,14 @@ uv run briefly notes.txt --model openai/gpt-4o-mini
 ```bash
 uv run briefly https://youtu.be/v4F1gFy-hqg --model openai/gpt-4o-mini
 uv run briefly https://www.youtube.com/watch?v=v4F1gFy-hqg --extract
+uv run briefly https://www.youtube.com/watch?v=v4F1gFy-hqg --extract --timestamps
 uv run briefly https://youtu.be/v4F1gFy-hqg --extract --json
 ```
 
 Briefly fetches the video's captions through YouTube's Android InnerTube API.
 Works for `youtube.com`, `youtu.be`, `/shorts`, `/embed`, and `/live` URLs.
-Videos without captions are not supported yet.
+Use `--timestamps` to print transcript lines with `[m:ss]` or `[h:mm:ss]`
+timestamps. Videos without captions are not supported yet.
 
 ### Extract mode
 
@@ -87,6 +90,7 @@ uv run briefly --help
 | `--max-tokens TEXT` | Maximum output tokens |
 | `--stream TEXT` | Streaming mode: `on`, `off`, or `auto` (TTY) |
 | `--json` | Print structured JSON; streaming is disabled in JSON mode |
+| `--timestamps` | Include YouTube transcript timestamps when available |
 | `--skip-cache` | Skip cache reads and writes |
 
 ### Cache
@@ -117,20 +121,35 @@ uv run pytest
 uv run ruff check
 ```
 
+On Windows, use the repo-local uv cache if the default cache fails:
+
+```powershell
+$env:UV_CACHE_DIR='.uv-cache'; uv run pytest
+$env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
+```
+
 ## Project Structure
 
 ```text
 briefly-ai/
 |-- pyproject.toml
-|-- README.md
+|-- uv.lock
+|-- AGENTS.md
+|-- CLAUDE.md
 |-- LICENSE
+|-- README.md
+|
 |-- docs/
+|   |-- RELEASE_v0.2.md
 |   |-- progress.md
 |   |-- tech_spec.md
 |   `-- testing.md
+|
 |-- packages/
 |   |-- briefly-core/
+|   |   |-- pyproject.toml
 |   |   `-- src/briefly_core/
+|   |       |-- __init__.py
 |   |       |-- briefing.py
 |   |       |-- cache.py
 |   |       |-- content.py
@@ -139,12 +158,21 @@ briefly-ai/
 |   |       |-- input.py
 |   |       |-- llm.py
 |   |       `-- youtube.py
+|   |
 |   `-- briefly-cli/
+|       |-- pyproject.toml
 |       `-- src/briefly_cli/
+|           |-- __init__.py
 |           |-- main.py
 |           `-- commands/
+|               |-- __init__.py
+|               |-- brief.py
 |               |-- cache.py
 |               |-- config.py
+|               |-- daemon.py
+|               |-- slides.py
+|               `-- transcriber.py
+|
 |-- tests/
 |   |-- cli/
 |   |   |-- conftest.py
@@ -155,10 +183,17 @@ briefly-ai/
 |   |   |-- test_extract.py
 |   |   |-- test_help.py
 |   |   |-- test_json_output.py
-|   |   `-- test_stream.py
+|   |   |-- test_stream.py
+|   |   `-- test_youtube_cli.py
 |   `-- core/
+|       |-- test_briefing.py
 |       |-- test_cache.py
-`-- uv.lock
+|       |-- test_content.py
+|       |-- test_config.py
+|       |-- test_flags.py
+|       |-- test_input.py
+|       |-- test_llm.py
+|       `-- test_youtube.py
 ```
 
 Docs: [tech spec](docs/tech_spec.md), [progress](docs/progress.md),

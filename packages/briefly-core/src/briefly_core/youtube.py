@@ -294,11 +294,22 @@ def transcript_to_extracted_content(
     transcript: YoutubeTranscript,
     *,
     source_url: str,
+    timestamps: bool = False,
 ) -> ExtractedContent:
     return ExtractedContent(
         source=source_url,
         title=transcript.title,
-        text=transcript.text,
+        text=transcript_to_text(transcript, timestamps=timestamps),
+    )
+
+
+def transcript_to_text(transcript: YoutubeTranscript, *, timestamps: bool = False) -> str:
+    if not timestamps:
+        return transcript.text
+
+    return "\n".join(
+        f"{_format_timestamp(segment.start_ms)} {segment.text}"
+        for segment in transcript.segments
     )
 
 
@@ -367,3 +378,12 @@ def _extract_video_title(player_response: dict[str, Any]) -> str | None:
             cleaned = title.strip()
             return cleaned or None
     return None
+
+
+def _format_timestamp(milliseconds: int) -> str:
+    total_seconds = max(0, milliseconds) // 1000
+    minutes, seconds = divmod(total_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"[{hours}:{minutes:02}:{seconds:02}]"
+    return f"[{minutes}:{seconds:02}]"

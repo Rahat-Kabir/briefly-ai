@@ -56,6 +56,7 @@ Current root command flags include:
 - `--max-tokens`
 - `--skip-cache`
 - `--json`
+- `--timestamps`
 
 Some short-term aliases exist for convenience. Internal names should still use
 Briefly-native terms.
@@ -130,6 +131,8 @@ Flow:
   format with `<text>` elements.
 - Parse XML segments and run `html.unescape` to decode double-encoded entities.
 - Return a `YoutubeTranscript` with title, language, segments, and joined text.
+- `--timestamps` formats transcript segments as timed lines for extract output
+  and for the text sent into the briefing request.
 
 Watch-page fallback runs only when the Android call returns no captions. It
 scrapes a fresh `INNERTUBE_API_KEY` and retries, in case the hardcoded key is
@@ -137,6 +140,7 @@ ever rotated.
 
 Cache uses a separate `youtube_transcript` slot from regular URL extraction so
 future YouTube extractor changes do not collide with HTML article entries.
+Plain and timestamped transcript output use separate cache keys.
 
 Failures raise clear errors: unsupported URL, no captions available, empty
 caption track, missing caption URL.
