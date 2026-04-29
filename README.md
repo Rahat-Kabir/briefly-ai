@@ -6,9 +6,9 @@ sources.
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
 LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
-YouTube caption briefing, token streaming, structured JSON output, and local
-cache are available. YouTube transcript timestamps are available in extract and
-briefing input.
+YouTube caption briefing, Groq Whisper fallback, token streaming, structured
+JSON output, and local cache are available. YouTube transcript timestamps are
+available in extract and briefing input.
 
 ## Usage
 
@@ -57,7 +57,15 @@ uv run briefly https://youtu.be/v4F1gFy-hqg --extract --json
 Briefly fetches the video's captions through YouTube's Android InnerTube API.
 Works for `youtube.com`, `youtu.be`, `/shorts`, `/embed`, and `/live` URLs.
 Use `--timestamps` to print transcript lines with `[m:ss]` or `[h:mm:ss]`
-timestamps. Videos without captions are not supported yet.
+timestamps.
+
+If YouTube captions are missing, Briefly can fall back to Groq Whisper. Install
+`yt-dlp` and set `GROQ_API_KEY`:
+
+```powershell
+$env:GROQ_API_KEY='your_groq_api_key'
+uv run briefly "https://youtu.be/example" --extract
+```
 
 ### Extract mode
 

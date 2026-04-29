@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -330,7 +331,11 @@ def test_fetch_youtube_transcript_falls_back_to_watch_page_for_fresh_key() -> No
     asyncio.run(run())
 
 
-def test_fetch_youtube_transcript_errors_when_no_captions() -> None:
+def test_fetch_youtube_transcript_errors_when_no_captions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
     no_captions_response = {
         "videoDetails": {"title": "No captions"},
         "captions": {"playerCaptionsTracklistRenderer": {"captionTracks": []}},
@@ -355,6 +360,85 @@ def test_fetch_youtube_transcript_errors_when_no_captions() -> None:
     asyncio.run(run())
 
 
+def test_fetch_youtube_transcript_uses_groq_whisper_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    async def fake_download_audio(url: str, output_dir: Path) -> Path:
+        assert url == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        audio_path = output_dir / "dQw4w9WgXcQ.mp3"
+        audio_path.write_bytes(b"audio-bytes")
+        return audio_path
+
+    monkeypatch.setattr("briefly_core.youtube._download_youtube_audio", fake_download_audio)
+
+    no_captions_response = {
+        "videoDetails": {"title": "No captions"},
+        "captions": {"playerCaptionsTracklistRenderer": {"captionTracks": []}},
+    }
+    groq_response = {
+        "text": "Groq fallback transcript.",
+        "segments": [{"start": 1.5, "end": 3.25, "text": "Groq fallback transcript."}],
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/watch":
+            return httpx.Response(200, text="")
+        if request.url.path == "/youtubei/v1/player":
+            return httpx.Response(200, json=no_captions_response)
+        if str(request.url) == "https://api.groq.com/openai/v1/audio/transcriptions":
+            assert request.headers["Authorization"] == "Bearer test-key"
+            assert b'name="model"\r\n\r\nwhisper-large-v3-turbo' in request.content
+            assert b"audio-bytes" in request.content
+            return httpx.Response(200, json=groq_response)
+        raise AssertionError(f"Unexpected request: {request.url}")
+
+    async def run() -> None:
+        async with _make_client(handler) as client:
+            transcript = await fetch_youtube_transcript(
+                "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                client=client,
+            )
+        assert transcript.video_id == "dQw4w9WgXcQ"
+        assert transcript.title == "No captions"
+        assert transcript.text == "Groq fallback transcript."
+        assert transcript.is_auto_generated is True
+        assert transcript.segments == (
+            CaptionSegment(start_ms=1500, duration_ms=1750, text="Groq fallback transcript."),
+        )
+
+    asyncio.run(run())
+
+
+def test_fetch_youtube_transcript_reports_groq_fallback_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    async def fake_download_audio(url: str, output_dir: Path) -> Path:
+        raise RuntimeError("yt-dlp failed")
+
+    monkeypatch.setattr("briefly_core.youtube._download_youtube_audio", fake_download_audio)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/watch":
+            return httpx.Response(200, text="")
+        if request.url.path == "/youtubei/v1/player":
+            return httpx.Response(200, json={})
+        raise AssertionError(f"Unexpected request: {request.url}")
+
+    async def run() -> None:
+        async with _make_client(handler) as client:
+            with pytest.raises(ValueError, match="Groq Whisper fallback failed: yt-dlp failed"):
+                await fetch_youtube_transcript(
+                    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    client=client,
+                )
+
+    asyncio.run(run())
+
+
 def test_fetch_youtube_transcript_rejects_invalid_url() -> None:
     async def run() -> None:
         with pytest.raises(ValueError, match="Unsupported YouTube URL"):
@@ -363,7 +447,11 @@ def test_fetch_youtube_transcript_rejects_invalid_url() -> None:
     asyncio.run(run())
 
 
-def test_fetch_youtube_transcript_errors_when_all_paths_fail() -> None:
+def test_fetch_youtube_transcript_errors_when_all_paths_fail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/youtubei/v1/player":
             return httpx.Response(503, text="boom")

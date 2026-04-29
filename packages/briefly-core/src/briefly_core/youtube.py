@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 import html
 import json
+import os
+from pathlib import Path
 import re
+import tempfile
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 from xml.etree import ElementTree
@@ -27,6 +31,8 @@ _VIDEO_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{11}")
 _INNERTUBE_API_KEY_PATTERN = re.compile(r'"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"')
 _FMT_QUERY_PATTERN = re.compile(r"([?&])fmt=[^&]*(&|$)")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
+_DEFAULT_GROQ_WHISPER_MODEL = "whisper-large-v3-turbo"
+_GROQ_TRANSCRIPTIONS_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 
 @dataclass(frozen=True)
@@ -251,6 +257,23 @@ async def fetch_youtube_transcript(
                         player_response = fallback_response
 
         if track is None:
+            title = (
+                _extract_video_title(player_response) if isinstance(player_response, dict) else None
+            )
+            try:
+                groq_transcript = await _fetch_groq_whisper_transcript(
+                    url,
+                    video_id=video_id,
+                    title=title,
+                    client=active_client,
+                )
+            except Exception as error:
+                raise ValueError(
+                    f"No captions available for this video: {video_id}. "
+                    f"Groq Whisper fallback failed: {error}"
+                ) from error
+            if groq_transcript is not None:
+                return groq_transcript
             raise ValueError(f"No captions available for this video: {video_id}")
 
         base_url = track.get("baseUrl")
@@ -311,6 +334,156 @@ def transcript_to_text(transcript: YoutubeTranscript, *, timestamps: bool = Fals
         f"{_format_timestamp(segment.start_ms)} {segment.text}"
         for segment in transcript.segments
     )
+
+
+async def _fetch_groq_whisper_transcript(
+    url: str,
+    *,
+    video_id: str,
+    title: str | None,
+    client: httpx.AsyncClient,
+) -> YoutubeTranscript | None:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+
+    with tempfile.TemporaryDirectory(prefix="briefly-youtube-") as temp_dir:
+        audio_path = await _download_youtube_audio(url, Path(temp_dir))
+        return await _transcribe_audio_with_groq(
+            audio_path,
+            video_id=video_id,
+            title=title,
+            api_key=api_key,
+            client=client,
+        )
+
+
+async def _download_youtube_audio(url: str, output_dir: Path) -> Path:
+    ytdlp = os.environ.get("YT_DLP_PATH") or "yt-dlp"
+    output_template = str(output_dir / "%(id)s.%(ext)s")
+    try:
+        process = await asyncio.create_subprocess_exec(
+            ytdlp,
+            "--no-playlist",
+            "-x",
+            "--audio-format",
+            "mp3",
+            "-o",
+            output_template,
+            url,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError("yt-dlp was not found. Set YT_DLP_PATH or install yt-dlp.") from error
+    _, stderr = await process.communicate()
+    if process.returncode != 0:
+        error = stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(error or "yt-dlp failed to download audio.")
+
+    audio_files = sorted(path for path in output_dir.iterdir() if path.is_file())
+    if not audio_files:
+        raise RuntimeError("yt-dlp did not produce an audio file.")
+    return audio_files[0]
+
+
+async def _transcribe_audio_with_groq(
+    audio_path: Path,
+    *,
+    video_id: str,
+    title: str | None,
+    api_key: str,
+    client: httpx.AsyncClient,
+) -> YoutubeTranscript:
+    model = os.environ.get("BRIEFLY_GROQ_WHISPER_MODEL") or _DEFAULT_GROQ_WHISPER_MODEL
+    files = {
+        "file": (
+            audio_path.name,
+            audio_path.read_bytes(),
+            _audio_content_type(audio_path),
+        )
+    }
+    response = await client.post(
+        _GROQ_TRANSCRIPTIONS_URL,
+        headers={"Authorization": f"Bearer {api_key}"},
+        data={
+            "model": model,
+            "response_format": "verbose_json",
+            "temperature": "0",
+        },
+        files=files,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(f"Groq transcription failed: HTTP {response.status_code}")
+
+    try:
+        payload = response.json()
+    except ValueError as error:
+        raise RuntimeError("Groq transcription returned invalid JSON.") from error
+    if not isinstance(payload, dict):
+        raise RuntimeError("Groq transcription returned an invalid response.")
+
+    text = payload.get("text")
+    if not isinstance(text, str) or not text.strip():
+        raise RuntimeError("Groq transcription returned empty text.")
+
+    segments = _groq_segments_to_caption_segments(payload)
+    if not segments:
+        segments = (CaptionSegment(start_ms=0, duration_ms=0, text=text.strip()),)
+
+    return YoutubeTranscript(
+        video_id=video_id,
+        title=title,
+        language_code=None,
+        is_auto_generated=True,
+        text=text.strip(),
+        segments=segments,
+    )
+
+
+def _groq_segments_to_caption_segments(payload: dict[str, Any]) -> tuple[CaptionSegment, ...]:
+    raw_segments = payload.get("segments")
+    if not isinstance(raw_segments, list):
+        return ()
+
+    segments: list[CaptionSegment] = []
+    for segment in raw_segments:
+        if not isinstance(segment, dict):
+            continue
+        text = segment.get("text")
+        if not isinstance(text, str) or not text.strip():
+            continue
+        start_ms = _seconds_to_ms(segment.get("start"))
+        end_ms = _seconds_to_ms(segment.get("end"))
+        segments.append(
+            CaptionSegment(
+                start_ms=start_ms,
+                duration_ms=max(0, end_ms - start_ms),
+                text=text.strip(),
+            )
+        )
+    return tuple(segments)
+
+
+def _seconds_to_ms(raw: object) -> int:
+    if not isinstance(raw, int | float) or isinstance(raw, bool):
+        return 0
+    return max(0, int(raw * 1000))
+
+
+def _audio_content_type(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".mp3":
+        return "audio/mpeg"
+    if suffix == ".m4a":
+        return "audio/mp4"
+    if suffix == ".ogg":
+        return "audio/ogg"
+    if suffix == ".wav":
+        return "audio/wav"
+    if suffix == ".webm":
+        return "audio/webm"
+    return "application/octet-stream"
 
 
 def _normalize_caption_url(url: str) -> str:

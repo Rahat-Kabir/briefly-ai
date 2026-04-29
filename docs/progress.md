@@ -2,6 +2,27 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.2.2 - Groq Whisper YouTube Fallback
+
+Why: support YouTube videos that have no accessible caption track.
+
+Completed:
+
+- Added a YouTube fallback path after Android captions and watch-page key retry.
+- Downloads audio with `yt-dlp` when `GROQ_API_KEY` is set.
+- Sends audio to Groq's OpenAI-compatible transcription endpoint.
+- Uses `whisper-large-v3-turbo` by default.
+- Keeps Groq segments compatible with existing timestamp output.
+- Added tests for no-key behavior, Groq fallback success, and fallback errors.
+
+Not built yet:
+
+- Subtitle-only yt-dlp fallback before audio transcription.
+- Local Whisper fallback.
+- Daemon server.
+- Browser extension integration.
+- Slides/transcription implementation.
+
 ## v0.2.1 - YouTube Timestamps
 
 Why: let users keep video timing while extracting or briefing YouTube captions.

@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 134 passed
+pytest: 136 passed
 ruff: All checks passed
 ```
 
@@ -60,6 +60,7 @@ tests/
   briefing routing.
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
   separation.
+- Groq Whisper YouTube fallback with mocked audio download and API response.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Structured JSON output for extract mode, briefing mode, cache hits, and

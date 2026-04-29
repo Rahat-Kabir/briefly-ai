@@ -65,7 +65,9 @@ briefing.
 - `--stream on|off|auto` token streaming through LiteLLM.
 - Structured `--json` output for extract and briefing results.
 - YouTube caption briefing through the Android InnerTube player API, with
-clean transcript text and a separate cache slot.
+  clean transcript text and a separate cache slot.
+- Groq Whisper fallback for YouTube videos with no captions, using `yt-dlp`
+  audio download and `GROQ_API_KEY`.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
 mocked LLM behavior, flag parsing, input resolution, and config loading.

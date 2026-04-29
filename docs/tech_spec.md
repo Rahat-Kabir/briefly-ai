@@ -138,6 +138,16 @@ Watch-page fallback runs only when the Android call returns no captions. It
 scrapes a fresh `INNERTUBE_API_KEY` and retries, in case the hardcoded key is
 ever rotated.
 
+If no caption track is available and `GROQ_API_KEY` is set, Briefly falls back
+to Groq Whisper:
+
+- Download audio with `yt-dlp`; `YT_DLP_PATH` may point to a custom binary.
+- POST the audio to Groq's OpenAI-compatible transcription endpoint.
+- Use `whisper-large-v3-turbo` by default.
+- `BRIEFLY_GROQ_WHISPER_MODEL` may override the Whisper model id.
+- Convert Groq segment timestamps into `CaptionSegment` values.
+- Fail clearly if the fallback is configured but `yt-dlp` or Groq fails.
+
 Cache uses a separate `youtube_transcript` slot from regular URL extraction so
 future YouTube extractor changes do not collide with HTML article entries.
 Plain and timestamped transcript output use separate cache keys.
