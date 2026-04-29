@@ -2,6 +2,28 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.3.0 - PDF Input
+
+Why: brief local PDF files using their text layer.
+
+Completed:
+
+- Added `briefly_core/pdf.py` with `extract_pdf` using pdfplumber.
+- Routed `.pdf` paths through a new `pdf` input kind without reading bytes
+  upfront.
+- Added a CLI PDF branch with cache slot `pdf_extract` keyed by absolute path
+  and file `mtime_ns`, so editing a PDF auto-invalidates the cache.
+- Title falls back from PDF metadata to filename stem.
+- Empty/scanned PDFs raise a clear "no extractable text" error.
+- Added 5 core and 6 CLI tests; PDF fixtures are hand-built to avoid extra
+  test dependencies.
+
+Not built yet:
+
+- Native OpenAI PDF attachment for higher-fidelity briefing.
+- OCR for scanned/image-only PDFs.
+- Word/Excel/PowerPoint document input.
+
 ## v0.2.2 - Groq Whisper YouTube Fallback
 
 Why: support YouTube videos that have no accessible caption track.

@@ -68,6 +68,7 @@ briefing.
   clean transcript text and a separate cache slot.
 - Groq Whisper fallback for YouTube videos with no captions, using `yt-dlp`
   audio download and `GROQ_API_KEY`.
+- Local PDF briefing through pdfplumber, with mtime-keyed extraction cache.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
 mocked LLM behavior, flag parsing, input resolution, and config loading.
@@ -125,6 +126,7 @@ briefly-ai/
 |   |       |-- flags.py
 |   |       |-- input.py
 |   |       |-- llm.py
+|   |       |-- pdf.py
 |   |       `-- youtube.py
 |   |
 |   `-- briefly-cli/
@@ -151,6 +153,7 @@ briefly-ai/
     |   |-- test_extract.py
     |   |-- test_help.py
     |   |-- test_json_output.py
+    |   |-- test_pdf_cli.py
     |   |-- test_stream.py
     |   `-- test_youtube_cli.py
     `-- core/
@@ -161,6 +164,7 @@ briefly-ai/
         |-- test_flags.py
         |-- test_input.py
         |-- test_llm.py
+        |-- test_pdf.py
         `-- test_youtube.py
 ```
 

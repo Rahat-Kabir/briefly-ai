@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Literal
 from urllib.parse import urlparse
 
-InputKind = Literal["text", "file", "stdin", "url"]
+InputKind = Literal["text", "file", "stdin", "url", "pdf"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,8 @@ def resolve_input_target(
 
     path = Path(raw_input).expanduser()
     if path.exists() and path.is_file():
+        if path.suffix.lower() == ".pdf":
+            return ResolvedInput(kind="pdf", source=str(path), text=None)
         return ResolvedInput(kind="file", source=str(path), text=path.read_text(encoding="utf-8"))
 
     return ResolvedInput(kind="text", source="literal", text=raw_input)

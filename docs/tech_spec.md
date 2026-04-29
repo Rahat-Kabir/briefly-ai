@@ -155,6 +155,25 @@ Plain and timestamped transcript output use separate cache keys.
 Failures raise clear errors: unsupported URL, no captions available, empty
 caption track, missing caption URL.
 
+## PDF
+
+Local `.pdf` paths resolve to a `pdf` input kind and are routed through
+pdfplumber.
+
+Flow:
+
+- `resolve_input_target` detects the `.pdf` suffix and returns
+  `kind="pdf"` with no eager read.
+- The CLI `_resolve_pdf_input` opens the file with pdfplumber, joins page
+  text with blank lines between pages, and returns an `ExtractedContent`.
+- Title comes from PDF `/Info` metadata when present, otherwise the filename
+  stem.
+- Empty/scanned PDFs raise `ValueError("PDF contained no extractable text")`.
+
+Cache uses `cache_kind="pdf_extract"` with the absolute path as the key and
+`text:<mtime_ns>` as the format slot, so editing the PDF invalidates the
+cache without manual flushing.
+
 ## Cache
 
 Briefly stores cache data in:

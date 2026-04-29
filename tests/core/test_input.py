@@ -36,3 +36,14 @@ def test_resolves_http_url_without_extracting() -> None:
         source="https://example.com",
         text=None,
     )
+
+
+def test_resolves_pdf_file_without_reading(tmp_path: Path) -> None:
+    pdf_path = tmp_path / "paper.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4\n")
+
+    assert resolve_input_target(str(pdf_path)) == ResolvedInput(
+        kind="pdf",
+        source=str(pdf_path),
+        text=None,
+    )

@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 136 passed
+pytest: 148 passed
 ruff: All checks passed
 ```
 
@@ -37,6 +37,7 @@ tests/
     test_extract.py
     test_help.py
     test_json_output.py
+    test_pdf_cli.py
     test_stream.py
     test_youtube_cli.py
   core/
@@ -47,6 +48,7 @@ tests/
     test_flags.py
     test_input.py
     test_llm.py
+    test_pdf.py
     test_youtube.py
 ```
 
@@ -61,6 +63,9 @@ tests/
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
   separation.
 - Groq Whisper YouTube fallback with mocked audio download and API response.
+- PDF text extraction via pdfplumber, metadata title fallback, multi-page
+  joining, empty-PDF error, and CLI cache hit / mtime invalidation /
+  `--skip-cache` paths.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Structured JSON output for extract mode, briefing mode, cache hits, and

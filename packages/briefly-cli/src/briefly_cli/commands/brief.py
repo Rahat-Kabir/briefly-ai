@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from pathlib import Path
 
 import click
 
@@ -24,6 +25,7 @@ from briefly_core.flags import (
 )
 from briefly_core.input import ResolvedInput, resolve_input_target
 from briefly_core.llm import generate_brief, generate_brief_stream
+from briefly_core.pdf import extract_pdf
 from briefly_core.youtube import (
     fetch_youtube_transcript,
     is_youtube_url,
@@ -32,6 +34,7 @@ from briefly_core.youtube import (
 
 _YOUTUBE_CACHE_KIND = "youtube_transcript"
 _YOUTUBE_CACHE_FORMAT = "text"
+_PDF_CACHE_KIND = "pdf_extract"
 
 
 @click.command(hidden=True)
@@ -325,9 +328,56 @@ async def _resolve_extractable_input(
             set_url_cache(resolved_input.source, extracted, output_format=output_format)
         return _resolved_url_input(extracted)
 
+    if resolved_input.kind == "pdf":
+        return await _resolve_pdf_input(
+            Path(resolved_input.source),
+            skip_cache=skip_cache,
+            cache_ttl_days=cache_ttl_days,
+        )
+
     if resolved_input.text is None:
         raise ValueError("Input did not resolve to text.")
     return resolved_input
+
+
+async def _resolve_pdf_input(
+    path: Path,
+    *,
+    skip_cache: bool,
+    cache_ttl_days: float | None,
+) -> ResolvedInput:
+    cache_format = _pdf_cache_format(path)
+    if not skip_cache:
+        cached = _get_url_cache(
+            str(path),
+            cache_format,
+            cache_ttl_days,
+            cache_kind=_PDF_CACHE_KIND,
+        )
+        if cached is not None:
+            return _resolved_pdf_input(cached)
+
+    extracted = await asyncio.to_thread(extract_pdf, path)
+    if not skip_cache:
+        set_url_cache(
+            str(path),
+            extracted,
+            output_format=cache_format,
+            cache_kind=_PDF_CACHE_KIND,
+        )
+    return _resolved_pdf_input(extracted)
+
+
+def _pdf_cache_format(path: Path) -> str:
+    return f"text:{path.stat().st_mtime_ns}"
+
+
+def _resolved_pdf_input(extracted: ExtractedContent) -> ResolvedInput:
+    if extracted.title:
+        text = f"{extracted.title}\n\n{extracted.text}"
+    else:
+        text = extracted.text
+    return ResolvedInput(kind="pdf", source=extracted.source, text=text)
 
 
 async def _resolve_youtube_input(

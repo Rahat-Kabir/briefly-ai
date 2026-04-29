@@ -43,7 +43,12 @@ This writes `~/.briefly/config.json` and refuses to overwrite it unless
 
 ```bash
 uv run briefly notes.txt --model openai/gpt-4o-mini
+uv run briefly paper.pdf --model openai/gpt-4o-mini
+uv run briefly paper.pdf --extract
 ```
+
+PDF input uses pdfplumber; the title comes from PDF metadata when present,
+otherwise the filename. Scanned/image-only PDFs raise a clear error.
 
 ### Brief a YouTube video
 
@@ -165,6 +170,7 @@ briefly-ai/
 |   |       |-- flags.py
 |   |       |-- input.py
 |   |       |-- llm.py
+|   |       |-- pdf.py
 |   |       `-- youtube.py
 |   |
 |   `-- briefly-cli/
@@ -191,6 +197,7 @@ briefly-ai/
 |   |   |-- test_extract.py
 |   |   |-- test_help.py
 |   |   |-- test_json_output.py
+|   |   |-- test_pdf_cli.py
 |   |   |-- test_stream.py
 |   |   `-- test_youtube_cli.py
 |   `-- core/
@@ -201,6 +208,7 @@ briefly-ai/
 |       |-- test_flags.py
 |       |-- test_input.py
 |       |-- test_llm.py
+|       |-- test_pdf.py
 |       `-- test_youtube.py
 ```
 

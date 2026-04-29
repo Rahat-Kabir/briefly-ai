@@ -8,6 +8,7 @@ dependencies = [
   "httpx>=0.28",
   "litellm>=1.0",
   "markdownify>=1.2.2",
+  "pdfplumber>=0.11",
   "trafilatura>=2.0",
 ]
 
