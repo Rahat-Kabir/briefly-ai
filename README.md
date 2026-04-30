@@ -3,6 +3,136 @@
 Python CLI for creating concise briefs from text, files, URLs, and later media
 sources.
 
+## Quickstart
+
+### 1. Clone the repo
+
+```powershell
+git clone https://github.com/Rahat-Kabir/briefly-ai
+cd briefly-ai
+```
+
+### 2. Install dependencies
+
+```powershell
+uv sync
+```
+
+On Windows, if uv cache or hardlink warnings appear, use the project-local cache
+and copy mode:
+
+```powershell
+$env:UV_CACHE_DIR='.uv-cache'
+$env:UV_LINK_MODE='copy'
+uv sync
+```
+
+### 3. Set your API key
+
+For OpenAI models, set `OPENAI_API_KEY`:
+
+```powershell
+$env:OPENAI_API_KEY='your_openai_api_key'
+```
+
+This sets the key for the current PowerShell session. To save it permanently for
+your Windows user:
+
+```powershell
+[Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your_openai_api_key', 'User')
+```
+
+Open a new terminal after setting it permanently.
+
+Other providers use their own environment variables, such as
+`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or other provider keys supported by
+LiteLLM.
+
+### 4. Set a default model
+
+```powershell
+uv run briefly config init --model <model-id>
+```
+
+Example:
+
+```powershell
+uv run briefly config init --model openai/gpt-4o-mini
+```
+
+The example above uses an OpenAI model, so it requires `OPENAI_API_KEY`.
+
+### 5. Run your first brief
+
+```powershell
+uv run briefly "Briefly turns long content into concise briefs."
+```
+
+Or pass a model for one command:
+
+```powershell
+uv run briefly "Briefly turns long content into concise briefs." --model openai/gpt-4o-mini
+```
+
+## Usage
+
+Briefly needs an LLM model for briefing. You can either save a default model
+once, or pass `--model` on each command.
+
+### Set a default model
+
+```powershell
+uv run briefly config init --model <model-id>
+```
+
+This writes `~/.briefly/config.json`. After that, regular commands can omit
+`--model`:
+
+```powershell
+uv run briefly "Paste or type any text here."
+uv run briefly notes.txt
+uv run briefly https://example.com
+```
+
+To use a different model for one command:
+
+```powershell
+uv run briefly notes.txt --model <model-id>
+```
+
+One valid model id is `openai/gpt-4o-mini`; use any LiteLLM-supported model id
+that matches your API keys.
+
+You can also define named model presets in `~/.briefly/config.json`:
+
+```json
+{
+  "model": "provider/model-id",
+  "models": {
+    "fast": "provider/model-id"
+  }
+}
+```
+
+Then run:
+
+```powershell
+uv run briefly notes.txt --model fast
+```
+
+`config init` refuses to overwrite an existing config unless `--force` is
+passed.
+
+### Common examples
+
+```powershell
+uv run briefly "Paste or type any text here."
+uv run briefly "Long article text..." --length short
+uv run briefly "Long article text..." --length long
+uv run briefly "Meeting notes..." --brief-type action
+uv run briefly https://example.com
+```
+
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
 LiteLLM. Brief types shape the prompt for standard, executive, action, study,
@@ -12,41 +142,11 @@ fallback, token streaming, structured JSON output, and local cache are
 available. YouTube transcript timestamps are available in extract and briefing
 input.
 
-## Usage
-
-### Brief text with an LLM
-
-```bash
-uv run briefly "Paste or type any text here." --model openai/gpt-4o-mini
-uv run briefly "Long article text..." --model openai/gpt-4o-mini --length short
-uv run briefly "Long article text..." --model openai/gpt-4o-mini --length long
-uv run briefly "Meeting notes..." --model openai/gpt-4o-mini --brief-type action
-uv run briefly https://example.com --model openai/gpt-4o-mini
-```
-
-Create a default config once:
-
-```bash
-uv run briefly config init --model openai/gpt-4o-mini
-```
-
-This writes `~/.briefly/config.json` and refuses to overwrite it unless
-`--force` is passed. `--model` may also be a named preset from that file:
-
-```json
-{
-  "model": "openai/gpt-4o-mini",
-  "models": {
-    "fast": "openai/gpt-4o-mini"
-  }
-}
-```
-
 ### Brief a file
 
-```bash
-uv run briefly notes.txt --model openai/gpt-4o-mini
-uv run briefly paper.pdf --model openai/gpt-4o-mini
+```powershell
+uv run briefly notes.txt
+uv run briefly paper.pdf
 uv run briefly paper.pdf --extract
 uv run briefly https://example.com/paper.pdf --extract
 ```
@@ -57,8 +157,8 @@ clear error.
 
 ### Brief a YouTube video
 
-```bash
-uv run briefly https://youtu.be/v4F1gFy-hqg --model openai/gpt-4o-mini
+```powershell
+uv run briefly https://youtu.be/v4F1gFy-hqg
 uv run briefly https://www.youtube.com/watch?v=v4F1gFy-hqg --extract
 uv run briefly https://www.youtube.com/watch?v=v4F1gFy-hqg --extract --timestamps
 uv run briefly https://youtu.be/v4F1gFy-hqg --extract --json
@@ -81,7 +181,7 @@ uv run briefly "https://youtu.be/example" --extract
 
 Extract mode resolves and prints input without an LLM call.
 
-```bash
+```powershell
 uv run briefly "Some text" --extract
 uv run briefly README.md --extract
 uv run briefly https://example.com --extract
@@ -97,11 +197,11 @@ URL extraction uses trafilatura first, with BeautifulSoup fallback. Use
 `--brief-type` changes the purpose of the brief while `--length` still controls
 size.
 
-```bash
-uv run briefly report.pdf --brief-type executive --model openai/gpt-4o-mini
-uv run briefly meeting.txt --brief-type action --model openai/gpt-4o-mini
-uv run briefly article.md --brief-type study --model openai/gpt-4o-mini
-uv run briefly proposal.pdf --brief-type decision --model openai/gpt-4o-mini
+```powershell
+uv run briefly report.pdf --brief-type executive
+uv run briefly meeting.txt --brief-type action
+uv run briefly article.md --brief-type study
+uv run briefly proposal.pdf --brief-type decision
 ```
 
 Available types:
@@ -116,7 +216,7 @@ Available types:
 
 ### Options
 
-```bash
+```powershell
 uv run briefly --help
 ```
 
@@ -138,7 +238,7 @@ uv run briefly --help
 
 Briefly stores URL extraction and summary results in `~/.briefly/cache.sqlite`.
 
-```bash
+```powershell
 uv run briefly cache stats
 uv run briefly cache clear
 uv run briefly https://example.com --skip-cache
@@ -157,7 +257,7 @@ after 30 days. Override both with:
 
 ## Development
 
-```bash
+```powershell
 uv run pytest
 uv run ruff check
 ```
