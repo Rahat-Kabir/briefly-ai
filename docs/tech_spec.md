@@ -49,6 +49,7 @@ Current root command flags include:
 
 - `--extract-only`
 - `--output-format`
+- `--brief-type`
 - `--length`
 - `--model`
 - `--stream`
@@ -64,13 +65,18 @@ Briefly-native terms.
 ## Briefing Requests
 
 Non-extract input is resolved into a `BriefingRequest` before model calls. The
-request stores source kind, text, prompt, model, length, output format, and
-input/output limits.
+request stores source kind, text, prompt, model, brief type, length, output
+format, and input/output limits.
 
 Current behavior:
 
 - Literal text, file text, and stdin can build briefing requests.
 - Extracted HTML URL text can build briefing requests.
+- `brief_type` defaults to `standard`, preserving the existing general brief
+  prompt when `--brief-type` is omitted.
+- `executive`, `action`, `study`, and `decision` brief types add
+  purpose-specific prompt instructions while leaving `--length` responsible for
+  output size.
 - Length presets add concrete prompt instructions and default output token caps.
 - `--format text` asks for plain text without Markdown formatting.
 - `--format markdown` allows Markdown output.
@@ -196,6 +202,8 @@ Current behavior:
 - Summary cache avoids repeated model calls for the same input/model/options.
 - URL cache keys include output format, so text and Markdown entries are
   separate.
+- Summary cache keys include brief type, so the same source can produce
+  separate standard, executive, action, study, and decision briefs.
 - `--skip-cache` bypasses cache reads and writes.
 - URL entries expire after 7 days by default.
 - Summary entries expire after 30 days by default.

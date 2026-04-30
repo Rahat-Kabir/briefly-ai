@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from briefly_core.flags import BriefLength, ExtractFormat, LengthArg
+from briefly_core.flags import BriefLength, BriefType, ExtractFormat, LengthArg
 from briefly_core.input import InputKind, ResolvedInput
 
 _PRESET_MAX_OUTPUT_TOKENS: dict[BriefLength, int] = {
@@ -37,11 +37,32 @@ _PRESET_INSTRUCTIONS: dict[BriefLength, tuple[str, ...]] = {
     ),
 }
 
+_TYPE_INSTRUCTIONS: dict[BriefType, tuple[str, ...]] = {
+    "standard": (),
+    "executive": (
+        "Frame the brief for a business or leadership reader.",
+        "Emphasize key takeaways, impact, risks, and what deserves attention.",
+    ),
+    "action": (
+        "Extract decisions, action items, owners, deadlines, blockers, and follow-ups.",
+        "Do not invent owners, deadlines, or commitments not present in the input.",
+    ),
+    "study": (
+        "Explain core concepts, definitions, examples, and review points.",
+        "Make the brief useful for learning and retention.",
+    ),
+    "decision": (
+        "Identify options, tradeoffs, risks, and the recommendation if the input supports one.",
+        "If evidence is missing, say what information is needed.",
+    ),
+}
+
 
 @dataclass(frozen=True)
 class BriefingOptions:
     length: LengthArg
     output_format: ExtractFormat
+    brief_type: BriefType = "standard"
     model: str | None = None
     max_input_chars: int | None = None
     max_output_tokens: int | None = None
@@ -84,7 +105,11 @@ def build_briefing_request(
 
 
 def _build_prompt(text: str, options: BriefingOptions) -> str:
-    instructions = [*_length_instructions(options.length), *_format_instructions(options.output_format)]
+    instructions = [
+        *_brief_type_instructions(options.brief_type),
+        *_length_instructions(options.length),
+        *_format_instructions(options.output_format),
+    ]
     instruction_text = "\n".join(f"- {instruction}" for instruction in instructions)
     return (
         "Create a concise brief from the input.\n\n"
@@ -111,6 +136,10 @@ def _length_instructions(length: LengthArg) -> tuple[str, ...]:
     if length.preset is None:
         raise ValueError("Length preset is missing.")
     return _PRESET_INSTRUCTIONS[length.preset]
+
+
+def _brief_type_instructions(brief_type: BriefType) -> tuple[str, ...]:
+    return _TYPE_INSTRUCTIONS[brief_type]
 
 
 def _format_instructions(output_format: ExtractFormat) -> tuple[str, ...]:

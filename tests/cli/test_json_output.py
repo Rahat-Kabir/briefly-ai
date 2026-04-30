@@ -18,6 +18,7 @@ def test_extract_json_outputs_structured_literal_text() -> None:
         "kind": "text",
         "source": "literal",
         "format": "text",
+        "briefType": "standard",
         "length": {"kind": "preset", "preset": "medium"},
         "maxInputChars": None,
         "maxOutputTokens": None,
@@ -61,6 +62,7 @@ def test_extract_json_outputs_structured_url_text(monkeypatch: pytest.MonkeyPatc
     assert payload["input"]["kind"] == "url"
     assert payload["input"]["source"] == "https://example.com"
     assert payload["input"]["format"] == "markdown"
+    assert payload["input"]["briefType"] == "standard"
     assert payload["extracted"] == {
         "kind": "url",
         "source": "https://example.com/final",
@@ -89,11 +91,41 @@ def test_brief_json_outputs_prompt_llm_summary_and_cache_status(
     assert payload["input"]["kind"] == "text"
     assert payload["input"]["source"] == "literal"
     assert payload["input"]["model"] == "test/model"
+    assert payload["input"]["briefType"] == "standard"
     assert payload["extracted"]["text"] == "Source text."
     assert "Source text." in payload["prompt"]
     assert payload["llm"] == {"model": "provider/model"}
     assert payload["cache"] == {"enabled": True, "summaryHit": False}
     assert payload["summary"] == "Whole brief."
+
+
+def test_brief_json_outputs_selected_brief_type(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_generate_brief(request):
+        assert request.options.brief_type == "decision"
+        assert "Identify options, tradeoffs, risks" in request.prompt
+        return BriefingResult(text="Decision brief.", model="provider/model")
+
+    monkeypatch.setattr("briefly_cli.commands.brief.generate_brief", fake_generate_brief)
+
+    result = runner.invoke(
+        app,
+        [
+            "Proposal text.",
+            "--model",
+            "test/model",
+            "--brief-type",
+            "decision",
+            "--stream",
+            "off",
+            "--json",
+        ],
+        color=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["input"]["briefType"] == "decision"
+    assert payload["summary"] == "Decision brief."
 
 
 def test_brief_json_cache_hit_avoids_generate_brief(monkeypatch: pytest.MonkeyPatch) -> None:

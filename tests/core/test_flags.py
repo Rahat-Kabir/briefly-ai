@@ -2,6 +2,7 @@ import pytest
 
 from briefly_core.flags import (
     LengthArg,
+    parse_brief_type,
     parse_duration_ms,
     parse_extract_format,
     parse_firecrawl_mode,
@@ -57,6 +58,16 @@ def test_parses_extract_format() -> None:
         parse_extract_format("nope")
 
 
+def test_parses_brief_type() -> None:
+    assert parse_brief_type("standard") == "standard"
+    assert parse_brief_type("EXECUTIVE") == "executive"
+    assert parse_brief_type("action") == "action"
+    assert parse_brief_type("study") == "study"
+    assert parse_brief_type("decision") == "decision"
+    with pytest.raises(ValueError, match="Unsupported --brief-type"):
+        parse_brief_type("technical")
+
+
 def test_parses_length_as_preset_or_character_count() -> None:
     assert parse_length_arg("medium") == LengthArg(kind="preset", preset="medium")
     assert parse_length_arg("s") == LengthArg(kind="preset", preset="short")
@@ -98,4 +109,3 @@ def test_parses_retries() -> None:
         parse_retries("6")
     with pytest.raises(ValueError, match="Unsupported --retries"):
         parse_retries("1.5")
-

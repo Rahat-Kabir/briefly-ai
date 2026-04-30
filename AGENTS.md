@@ -58,6 +58,8 @@ briefing request/LLM logic.
 - Extract mode for literal text, local files, and stdin.
 - Internal briefing request builder for resolved text input.
 - LiteLLM-backed briefing with explicit or configured `--model`.
+- `--brief-type standard|executive|action|study|decision` prompt shaping,
+  with `standard` preserving existing behavior.
 - `briefly config init --model <id>` for first-time config creation.
 - SQLite URL and summary cache with TTL, `cache stats`, and `cache clear`.
 - Trafilatura-first HTML URL extraction with text/Markdown output and URL
@@ -218,6 +220,7 @@ briefly "some text" --extract
 briefly my-file.txt --extract
 briefly https://example.com
 briefly my-file.txt --length long
+briefly meeting.txt --brief-type action
 briefly daemon --help
 briefly slides --help
 briefly transcriber setup --help
@@ -227,6 +230,7 @@ Cleaner Briefly flags are preferred:
 
 - `--extract-only`
 - `--output-format`
+- `--brief-type`
 - `--max-input-chars`
 - `--max-tokens`
 - `--skip-cache`
@@ -261,7 +265,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 151 passed
+pytest: 156 passed
 ruff: All checks passed
 ```
 

@@ -23,12 +23,14 @@ def _request(
     model: str = "test/model",
     length: LengthArg | None = None,
     output_format: str = "text",
+    brief_type: str = "standard",
 ):
     return build_briefing_request(
         ResolvedInput(kind="text", source="literal", text="Cache this."),
         BriefingOptions(
             length=length or LengthArg(kind="preset", preset="medium"),
             output_format=output_format,
+            brief_type=brief_type,
             model=model,
         ),
     )
@@ -79,10 +81,12 @@ def test_summary_cache_key_changes_with_options() -> None:
     base = _request()
     long = _request(length=LengthArg(kind="preset", preset="long"))
     markdown = _request(output_format="markdown")
+    action = _request(brief_type="action")
     other_model = _request(model="other/model")
 
     assert summary_cache_key(base) != summary_cache_key(long)
     assert summary_cache_key(base) != summary_cache_key(markdown)
+    assert summary_cache_key(base) != summary_cache_key(action)
     assert summary_cache_key(base) != summary_cache_key(other_model)
 
 

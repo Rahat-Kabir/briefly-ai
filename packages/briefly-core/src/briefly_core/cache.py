@@ -220,6 +220,7 @@ def summary_cache_key(request: BriefingRequest) -> str:
             "source": request.source,
             "text_hash": _hash_text(request.text),
             "model": request.options.model,
+            "brief_type": request.options.brief_type,
             "length": {
                 "kind": request.options.length.kind,
                 "preset": request.options.length.preset,

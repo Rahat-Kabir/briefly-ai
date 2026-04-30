@@ -2,6 +2,30 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+## v0.3.2 - Brief Types
+
+Why: let users shape a brief for general reading, executive review, action
+follow-up, study, or decision support.
+
+Completed:
+
+- Added `--brief-type standard|executive|action|study|decision` to the root
+  briefing command.
+- Kept `standard` as the default so existing commands preserve the current
+  general brief behavior.
+- Added type-specific prompt instructions for executive, action, study, and
+  decision briefs.
+- Included `briefType` in structured JSON output.
+- Added brief type to summary cache keys so different brief types do not reuse
+  the same cached summary.
+- Added parser, prompt, cache, CLI, help, and JSON tests.
+
+Not built yet:
+
+- Config-backed default brief type.
+- Custom user-defined brief templates.
+- Domain-specific types such as legal, medical, or sales.
+
 ## v0.3.1 - PDF URL Input
 
 Why: let remote PDF links use the same text extraction path as local PDFs.

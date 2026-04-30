@@ -17,6 +17,7 @@ from briefly_core.config import ConfigData, load_config
 from briefly_core.content import ExtractedContent, extract_url
 from briefly_core.flags import (
     StreamMode,
+    parse_brief_type,
     parse_extract_format,
     parse_length_arg,
     parse_max_extract_characters,
@@ -41,6 +42,11 @@ _PDF_CACHE_KIND = "pdf_extract"
 @click.argument("input", required=False)
 @click.option("--extract-only", "--extract", is_flag=True, help="Extract content without briefing.")
 @click.option("--output-format", "--format", default="text", help="Output format: text or markdown.")
+@click.option(
+    "--brief-type",
+    default="standard",
+    help="Brief type: standard, executive, action, study, or decision.",
+)
 @click.option("--length", default="medium", help="Brief length preset or character count.")
 @click.option("--model", default=None, help="Model id or configured model preset.")
 @click.option("--stream", default="auto", help="Streaming mode: auto, on, or off.")
@@ -58,6 +64,7 @@ def brief(
     input: str | None,
     extract_only: bool,
     output_format: str,
+    brief_type: str,
     length: str,
     model: str | None,
     stream: str,
@@ -72,6 +79,7 @@ def brief(
 
     try:
         parsed_output_format = parse_extract_format(output_format)
+        parsed_brief_type = parse_brief_type(brief_type)
         parsed_length = parse_length_arg(length)
         parsed_stream_mode = parse_stream_mode(stream)
         parsed_max_input_chars = parse_max_extract_characters(max_input_chars)
@@ -108,6 +116,7 @@ def brief(
                     "input": _input_payload(
                         resolved_input,
                         output_format=parsed_output_format,
+                        brief_type=parsed_brief_type,
                         length=parsed_length,
                         max_input_chars=parsed_max_input_chars,
                         max_output_tokens=parsed_max_tokens,
@@ -139,6 +148,7 @@ def brief(
         briefing_options = BriefingOptions(
             length=parsed_length,
             output_format=parsed_output_format,
+            brief_type=parsed_brief_type,
             model=resolved_model,
             max_input_chars=parsed_max_input_chars,
             max_output_tokens=parsed_max_tokens,
@@ -440,6 +450,7 @@ def _briefing_payload(
         "input": _input_payload(
             resolved_input,
             output_format=briefing_request.options.output_format,
+            brief_type=briefing_request.options.brief_type,
             length=briefing_request.options.length,
             max_input_chars=briefing_request.options.max_input_chars,
             max_output_tokens=briefing_request.options.max_output_tokens,
@@ -460,6 +471,7 @@ def _input_payload(
     resolved_input: ResolvedInput,
     *,
     output_format: str,
+    brief_type: str,
     length,
     max_input_chars: int | None,
     max_output_tokens: int | None,
@@ -469,6 +481,7 @@ def _input_payload(
         "kind": resolved_input.kind,
         "source": resolved_input.source,
         "format": output_format,
+        "briefType": brief_type,
         "length": _length_payload(length),
         "maxInputChars": max_input_chars,
         "maxOutputTokens": max_output_tokens,

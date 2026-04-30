@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 151 passed
+pytest: 156 passed
 ruff: All checks passed
 ```
 
@@ -57,7 +57,7 @@ tests/
 - CLI help and version output.
 - Root input command routing.
 - Briefing request construction.
-- Length preset and output-format prompt behavior.
+- Brief type, length preset, and output-format prompt behavior.
 - URL HTML extraction, Markdown mode, trafilatura fallback behavior, and URL
   briefing routing.
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
@@ -70,9 +70,10 @@ tests/
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
 - Structured JSON output for extract mode, briefing mode, cache hits, and
-  stream-disabled JSON mode.
+  stream-disabled JSON mode, including `briefType`.
 - Config-backed model resolution and `config init`.
 - URL and summary cache behavior, TTL, stats, and clear.
+- Summary cache separation by brief type.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - Placeholder briefing behavior.
 - Flag parser behavior.

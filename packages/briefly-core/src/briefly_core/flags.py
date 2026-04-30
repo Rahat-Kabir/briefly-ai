@@ -15,8 +15,16 @@ StreamMode = Literal["auto", "on", "off"]
 MetricsMode = Literal["off", "on", "detailed"]
 VideoMode = Literal["auto", "transcript", "understand"]
 BriefLength = Literal["short", "medium", "long", "xl", "xxl"]
+BriefType = Literal["standard", "executive", "action", "study", "decision"]
 
 BRIEF_LENGTHS: tuple[BriefLength, ...] = ("short", "medium", "long", "xl", "xxl")
+BRIEF_TYPES: tuple[BriefType, ...] = (
+    "standard",
+    "executive",
+    "action",
+    "study",
+    "decision",
+)
 _DURATION_PATTERN = re.compile(r"^(?P<value>\d+(?:\.\d+)?)(?P<unit>ms|s|m|h)?$", re.I)
 _COUNT_PATTERN = re.compile(r"^(?P<value>\d+(?:\.\d+)?)(?P<unit>k|m)?$", re.I)
 _MIN_LENGTH_CHARS = 10
@@ -92,6 +100,13 @@ def parse_video_mode(raw: str) -> VideoMode:
     if normalized in {"auto", "transcript", "understand"}:
         return normalized  # type: ignore[return-value]
     raise ValueError(f"Unsupported --video-mode: {raw}")
+
+
+def parse_brief_type(raw: str) -> BriefType:
+    normalized = raw.strip().lower()
+    if normalized in BRIEF_TYPES:
+        return normalized  # type: ignore[return-value]
+    raise ValueError(f"Unsupported --brief-type: {raw}")
 
 
 def parse_duration_ms(raw: str) -> int:

@@ -5,10 +5,12 @@ sources.
 
 Current state: early CLI foundation. Briefly can resolve text/file/stdin input,
 print extracted text, and generate length-controlled text briefs through
-LiteLLM. Config-backed model selection, trafilatura-backed HTML URL briefing,
-YouTube caption briefing, Groq Whisper fallback, token streaming, structured
-JSON output, and local cache are available. YouTube transcript timestamps are
-available in extract and briefing input.
+LiteLLM. Brief types shape the prompt for standard, executive, action, study,
+and decision-focused output. Config-backed model selection,
+trafilatura-backed HTML URL briefing, YouTube caption briefing, Groq Whisper
+fallback, token streaming, structured JSON output, and local cache are
+available. YouTube transcript timestamps are available in extract and briefing
+input.
 
 ## Usage
 
@@ -18,6 +20,7 @@ available in extract and briefing input.
 uv run briefly "Paste or type any text here." --model openai/gpt-4o-mini
 uv run briefly "Long article text..." --model openai/gpt-4o-mini --length short
 uv run briefly "Long article text..." --model openai/gpt-4o-mini --length long
+uv run briefly "Meeting notes..." --model openai/gpt-4o-mini --brief-type action
 uv run briefly https://example.com --model openai/gpt-4o-mini
 ```
 
@@ -89,6 +92,28 @@ echo "Piped text" | uv run briefly - --extract
 URL extraction uses trafilatura first, with BeautifulSoup fallback. Use
 `--output-format markdown` to preserve Markdown-style headings and links.
 
+### Brief types
+
+`--brief-type` changes the purpose of the brief while `--length` still controls
+size.
+
+```bash
+uv run briefly report.pdf --brief-type executive --model openai/gpt-4o-mini
+uv run briefly meeting.txt --brief-type action --model openai/gpt-4o-mini
+uv run briefly article.md --brief-type study --model openai/gpt-4o-mini
+uv run briefly proposal.pdf --brief-type decision --model openai/gpt-4o-mini
+```
+
+Available types:
+
+| Type | Purpose |
+|------|---------|
+| `standard` | General concise brief; this is the default and preserves existing behavior |
+| `executive` | Business or leadership brief focused on takeaways, impact, risks, and attention areas |
+| `action` | Decisions, action items, owners, deadlines, blockers, and follow-ups without inventing missing details |
+| `study` | Core concepts, definitions, examples, and review points for learning |
+| `decision` | Options, tradeoffs, risks, supported recommendation, and missing evidence |
+
 ### Options
 
 ```bash
@@ -100,6 +125,7 @@ uv run briefly --help
 | `--extract` | Print resolved input without briefing |
 | `--model TEXT` | LLM model id or configured model preset |
 | `--length TEXT` | Brief length: `short`, `medium`, `long`, `xl`, `xxl`, or a char count like `500` |
+| `--brief-type TEXT` | Brief type: `standard`, `executive`, `action`, `study`, or `decision` |
 | `--output-format TEXT` | Output format: `text` or `markdown` |
 | `--max-input-chars TEXT` | Truncate input to this many characters, e.g. `50k` |
 | `--max-tokens TEXT` | Maximum output tokens |

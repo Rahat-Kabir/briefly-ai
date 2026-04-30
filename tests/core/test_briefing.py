@@ -29,6 +29,41 @@ def test_builds_briefing_request_from_text() -> None:
     assert "Briefly builds requests." in request.prompt
 
 
+def test_adds_brief_type_instructions() -> None:
+    cases = {
+        "executive": "Frame the brief for a business or leadership reader.",
+        "action": "Do not invent owners, deadlines, or commitments",
+        "study": "Make the brief useful for learning and retention.",
+        "decision": "If evidence is missing, say what information is needed.",
+    }
+
+    for brief_type, expected_instruction in cases.items():
+        request = build_briefing_request(
+            ResolvedInput(kind="text", source="literal", text="Brief this."),
+            BriefingOptions(
+                length=LengthArg(kind="preset", preset="medium"),
+                output_format="text",
+                brief_type=brief_type,
+            ),
+        )
+
+        assert request.options.brief_type == brief_type
+        assert expected_instruction in request.prompt
+
+
+def test_standard_brief_type_keeps_general_prompt() -> None:
+    request = build_briefing_request(
+        ResolvedInput(kind="text", source="literal", text="Brief this."),
+        BriefingOptions(
+            length=LengthArg(kind="preset", preset="medium"),
+            output_format="text",
+        ),
+    )
+
+    assert request.options.brief_type == "standard"
+    assert "Frame the brief for a business or leadership reader." not in request.prompt
+
+
 def test_applies_max_input_characters() -> None:
     request = build_briefing_request(
         ResolvedInput(kind="stdin", source="-", text="abcdefghij"),

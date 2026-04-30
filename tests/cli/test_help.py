@@ -11,6 +11,7 @@ def test_root_help() -> None:
     assert "Create concise briefs from text, files, and URLs." in result.output
     assert "--extract-only" in result.output
     assert "--max-input-chars" in result.output
+    assert "--brief-type" in result.output
     assert "--timestamps" in result.output
     assert "cache" in result.output
     assert "config" in result.output
@@ -124,7 +125,29 @@ def test_url_briefing_can_use_markdown_input(monkeypatch) -> None:
     assert result.output == "Generated Markdown brief.\n"
 
 
+def test_brief_type_reaches_briefing_request(monkeypatch) -> None:
+    async def fake_generate_brief(request):
+        assert request.options.brief_type == "action"
+        assert "Extract decisions, action items" in request.prompt
+        return type("Result", (), {"text": "Action brief."})()
+
+    monkeypatch.setattr("briefly_cli.commands.brief.generate_brief", fake_generate_brief)
+
+    result = runner.invoke(
+        app,
+        ["Meeting notes.", "--model", "test/model", "--brief-type", "action"],
+        color=False,
+    )
+
+    assert result.exit_code == 0
+    assert result.output == "Action brief.\n"
+
+
 def test_root_validates_flags() -> None:
     result = runner.invoke(app, ["https://example.com", "--length", "1"], color=False)
     assert result.exit_code != 0
     assert "Unsupported --length" in result.output
+
+    result = runner.invoke(app, ["https://example.com", "--brief-type", "technical"], color=False)
+    assert result.exit_code != 0
+    assert "Unsupported --brief-type" in result.output
