@@ -1,10 +1,71 @@
 [project]
 name = "briefly-ai"
-version = "0.1.6"
-description = "Briefly AI workspace."
+version = "0.1.0"
+description = "Python CLI for creating concise briefs from text, files, URLs, YouTube videos, and PDFs."
+readme = "README.md"
 requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Rahat Kabir" },
+]
+keywords = [
+  "ai",
+  "brief",
+  "briefing",
+  "cli",
+  "llm",
+  "pdf",
+  "summarization",
+  "youtube",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Text Processing",
+  "Topic :: Utilities",
+]
 dependencies = [
-  "briefly-cli",
+  "beautifulsoup4>=4.12",
+  "click>=8.0",
+  "httpx>=0.28",
+  "litellm>=1.0",
+  "markdownify>=1.2.2",
+  "pdfplumber>=0.11",
+  "trafilatura>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Rahat-Kabir/briefly-ai"
+Repository = "https://github.com/Rahat-Kabir/briefly-ai"
+Issues = "https://github.com/Rahat-Kabir/briefly-ai/issues"
+
+[project.scripts]
+briefly = "briefly_cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "packages/briefly-core/src/briefly_core",
+  "packages/briefly-cli/src/briefly_cli",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "packages/briefly-core/src/briefly_core",
+  "packages/briefly-cli/src/briefly_cli",
+  "README.md",
+  "LICENSE",
+  "pyproject.toml",
 ]
 
 [tool.uv.workspace]

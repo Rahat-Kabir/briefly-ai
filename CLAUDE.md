@@ -30,6 +30,8 @@ the decisions made in the session. Update `docs/testing.md` when test
 workflow or coverage changes.
 - `docs/progress.md` is the per-feature dev log - one entry per completed
 `vX.Y.Z`, with a one-line `Why:`.
+- Development log versions before the first PyPI release are internal
+milestones. The first public package release starts at `0.1.0`.
 - `docs/RELEASE_v0.X.md` is a themed chapter note - write one only when the
 middle version number bumps, such as the first `v0.3.0` release. It groups
 the `v0.X.0 -> v0.X.N` entries from `progress.md` under user-facing

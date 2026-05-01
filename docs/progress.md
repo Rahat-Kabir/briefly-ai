@@ -2,6 +2,9 @@
 
 This is the per-feature development log. Add one entry per completed version.
 
+Note: versions before the first PyPI release are internal development
+milestones. The first public package release starts at `0.1.0`.
+
 ## v0.3.2 - Brief Types
 
 Why: let users shape a brief for general reading, executive review, action

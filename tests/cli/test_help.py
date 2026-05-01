@@ -23,7 +23,7 @@ def test_root_help() -> None:
 def test_version() -> None:
     result = runner.invoke(app, ["--version"], color=False)
     assert result.exit_code == 0
-    assert "briefly 0.1.6" in result.output
+    assert "briefly 0.1.0" in result.output
 
 
 def test_command_help() -> None:
