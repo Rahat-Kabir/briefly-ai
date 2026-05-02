@@ -1,7 +1,17 @@
 # Briefly AI
 
-Python CLI for creating concise briefs from text, files, URLs, and later media
-sources.
+Python CLI for creating concise briefs from text, files, URLs, YouTube videos,
+and PDFs.
+
+## Supported Inputs
+
+- Plain text
+- Local text/Markdown files
+- Local and remote PDFs
+- Web pages
+- YouTube videos with captions
+- YouTube videos without captions via Groq Whisper fallback
+- Stdin
 
 ## Quickstart
 
