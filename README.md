@@ -15,7 +15,31 @@ and PDFs.
 
 ## Quickstart
 
+### Install from PyPI
+
+Recommended for CLI users:
+
+```powershell
+uv tool install briefly-ai
+briefly --help
+```
+
+Run once without installing permanently:
+
+```powershell
+uvx --from briefly-ai briefly --help
+```
+
+Alternative with pip:
+
+```powershell
+pip install briefly-ai
+briefly --help
+```
+
 ### 1. Clone the repo
+
+Use this path if you want to work from source.
 
 ```powershell
 git clone https://github.com/Rahat-Kabir/briefly-ai
