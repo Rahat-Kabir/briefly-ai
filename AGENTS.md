@@ -119,6 +119,9 @@ briefly-ai/
 |-- LICENSE
 |-- README.md
 |
+|-- assets/
+|   `-- briefly-ai-hero.png
+|
 |-- docs/
 |   |-- RELEASE_v0.2.md
 |   |-- progress.md

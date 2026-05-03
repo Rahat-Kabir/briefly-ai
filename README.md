@@ -3,6 +3,8 @@
 Python CLI for creating concise briefs from text, files, URLs, YouTube videos,
 and PDFs.
 
+![Briefly AI hero image](assets/briefly-ai-hero.png)
+
 ## Supported Inputs
 
 - Plain text
