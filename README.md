@@ -58,6 +58,25 @@ Other providers use their own environment variables, such as
 `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or other provider keys supported by
 LiteLLM.
 
+Common provider keys:
+
+```powershell
+$env:OPENAI_API_KEY='your_openai_api_key'
+$env:ANTHROPIC_API_KEY='your_anthropic_api_key'
+$env:GEMINI_API_KEY='your_gemini_api_key'
+$env:GROQ_API_KEY='your_groq_api_key'
+$env:OPENROUTER_API_KEY='your_openrouter_api_key'
+```
+
+Example model ids:
+
+```powershell
+uv run briefly "Hello" --model openai/gpt-4o-mini
+uv run briefly "Hello" --model anthropic/claude-sonnet-4-5
+uv run briefly "Hello" --model groq/llama-3.1-8b-instant
+uv run briefly "Hello" --model openrouter/openai/gpt-4o-mini
+```
+
 ### 4. Set a default model
 
 ```powershell
