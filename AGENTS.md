@@ -30,6 +30,8 @@ the decisions made in the session. Update `docs/testing.md` when test
 workflow or coverage changes.
 - `docs/progress.md` is the per-feature dev log - one entry per completed
 `vX.Y.Z`, with a one-line `Why:`.
+- `CHANGELOG.md` is for public package releases only; keep detailed
+per-feature development notes in `docs/progress.md`.
 - Development log versions before the first PyPI release are internal
 milestones. The first public package release starts at `0.1.0`.
 - `docs/RELEASE_v0.X.md` is a themed chapter note - write one only when the
@@ -39,6 +41,9 @@ highlights. Once written, a release file is frozen.
 - Bump the middle version (`0.X.0`) when starting a new theme/chapter, not for
 every feature. Bump the patch version (`0.X.Y`) for each feature within the
 chapter.
+- For public package releases, follow `docs/release.md`.
+- Do not bump package versions, create git tags, or publish to TestPyPI/PyPI
+without explicit user approval.
 
 ## Workflow
 
@@ -110,12 +115,14 @@ briefly-ai/
 |-- uv.lock
 |-- AGENTS.md
 |-- CLAUDE.md
+|-- CHANGELOG.md
 |-- LICENSE
 |-- README.md
 |
 |-- docs/
 |   |-- RELEASE_v0.2.md
 |   |-- progress.md
+|   |-- release.md
 |   |-- tech_spec.md
 |   `-- testing.md
 |

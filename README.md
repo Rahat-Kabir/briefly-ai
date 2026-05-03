@@ -330,12 +330,14 @@ briefly-ai/
 |-- uv.lock
 |-- AGENTS.md
 |-- CLAUDE.md
+|-- CHANGELOG.md
 |-- LICENSE
 |-- README.md
 |
 |-- docs/
 |   |-- RELEASE_v0.2.md
 |   |-- progress.md
+|   |-- release.md
 |   |-- tech_spec.md
 |   `-- testing.md
 |
@@ -394,7 +396,8 @@ briefly-ai/
 ```
 
 Docs: [tech spec](docs/tech_spec.md), [progress](docs/progress.md),
-[testing](docs/testing.md).
+[release](docs/release.md), [testing](docs/testing.md).
+Release notes: [changelog](CHANGELOG.md).
 
 ## License
 
