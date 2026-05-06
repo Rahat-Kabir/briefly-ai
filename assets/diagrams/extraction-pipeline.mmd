@@ -1,0 +1,15 @@
+flowchart LR
+    Input[briefly input] --> Resolver{Input Type?}
+    Resolver -->|text/file| Extract[Text Extractor]
+    Resolver -->|URL| Trafilatura[Trafilatura]
+    Resolver -->|PDF| PDFPlumber[pdfplumber]
+    Resolver -->|YouTube| YT{Captions?}
+    YT -->|yes| InnerTube[InnerTube API]
+    YT -->|no| Whisper[yt-dlp + Groq Whisper]
+    Extract --> Cache[(SQLite Cache)]
+    Trafilatura --> Cache
+    PDFPlumber --> Cache
+    InnerTube --> Cache
+    Whisper --> Cache
+    Cache --> LLM[LiteLLM + Brief Type]
+    LLM --> Output[Brief]

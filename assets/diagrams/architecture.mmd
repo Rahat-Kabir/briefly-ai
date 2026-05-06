@@ -1,0 +1,19 @@
+flowchart TB
+    subgraph CLI[briefly-cli]
+        Main[main.py]
+        Cmds[commands/]
+    end
+    subgraph Core[briefly-core]
+        Config[config.py]
+        Input2[input.py]
+        Content[content.py]
+        PDF[pdf.py]
+        YouTube[youtube.py]
+        Cache2[cache.py]
+        Briefing[briefing.py]
+        LLM2[llm.py]
+    end
+    User([User]) --> Main
+    Main --> Cmds
+    Cmds --> Core
+    Core -.->|never imports| CLI

@@ -120,7 +120,8 @@ briefly-ai/
 |-- README.md
 |
 |-- assets/
-|   `-- briefly-ai-hero.png
+|   |-- briefly-ai-hero.png
+|   `-- diagrams/           # Mermaid source and rendered SVG diagrams
 |
 |-- docs/
 |   |-- RELEASE_v0.2.md

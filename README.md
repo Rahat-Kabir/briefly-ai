@@ -5,6 +5,8 @@ and PDFs.
 
 ![Briefly AI hero image](assets/briefly-ai-hero.png)
 
+Diagrams are kept in `assets/diagrams/` as Mermaid source and SVG renders.
+
 ## Supported Inputs
 
 - Plain text
@@ -335,6 +337,10 @@ briefly-ai/
 |-- CHANGELOG.md
 |-- LICENSE
 |-- README.md
+|
+|-- assets/
+|   |-- briefly-ai-hero.png
+|   `-- diagrams/           # Mermaid source and rendered SVG diagrams
 |
 |-- docs/
 |   |-- RELEASE_v0.2.md

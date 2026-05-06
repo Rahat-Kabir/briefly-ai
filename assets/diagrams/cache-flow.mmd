@@ -1,0 +1,13 @@
+flowchart TD
+    Req[Brief Request] --> Key{Build Cache Key}
+    Key -->|URL| URLKey[hash url + brief-type + model]
+    Key -->|local PDF| PDFKey[hash path + mtime + brief-type + model]
+    Key -->|YouTube| YTKey[hash video_id + brief-type + model]
+    URLKey --> Lookup[(SQLite Lookup)]
+    PDFKey --> Lookup
+    YTKey --> Lookup
+    Lookup --> Hit{Hit and not expired?}
+    Hit -->|yes| Return[Return cached brief]
+    Hit -->|no| Fetch[Extract and brief via LLM]
+    Fetch --> Store[Store with TTL]
+    Store --> Return
