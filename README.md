@@ -358,7 +358,6 @@ briefly-ai/
 |   `-- diagrams/           # Mermaid source and rendered SVG diagrams
 |
 |-- docs/
-|   |-- RELEASE_v0.2.md
 |   |-- progress.md
 |   |-- release.md
 |   |-- tech_spec.md

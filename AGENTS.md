@@ -28,19 +28,20 @@ Structure section in this file to reflect the change.
 - After code changes, update `docs/tech_spec.md` and `docs/progress.md` with
 the decisions made in the session. Update `docs/testing.md` when test
 workflow or coverage changes.
-- `docs/progress.md` is the per-feature dev log - one entry per completed
-`vX.Y.Z`, with a one-line `Why:`.
-- `CHANGELOG.md` is for public package releases only; keep detailed
-per-feature development notes in `docs/progress.md`.
-- Development log versions before the first PyPI release are internal
-milestones. The first public package release starts at `0.1.0`.
-- `docs/RELEASE_v0.X.md` is a themed chapter note - write one only when the
-middle version number bumps, such as the first `v0.3.0` release. It groups
-the `v0.X.0 -> v0.X.N` entries from `progress.md` under user-facing
-highlights. Once written, a release file is frozen.
-- Bump the middle version (`0.X.0`) when starting a new theme/chapter, not for
-every feature. Bump the patch version (`0.X.Y`) for each feature within the
-chapter.
+- PyPI package versions are the only versions. Do not create internal `vX.Y.Z`
+feature milestones.
+- `docs/progress.md` is the development log. Keep active work under the next
+chosen `Unreleased` package version, such as `v0.2.0 - Unreleased`, with a
+one-line `Why:`.
+- `CHANGELOG.md` is for public package releases only. Update it during release
+preparation, not for every feature.
+- Keep `pyproject.toml` versions at the latest published PyPI version until
+the user explicitly asks to prepare a release.
+- Choose the next version only when the user decides the release target. Use
+patch versions for bugfix releases and minor versions for larger feature
+releases.
+- Do not create `docs/RELEASE_v0.X.md` files unless the user explicitly asks
+for themed release notes during release preparation.
 - For public package releases, follow `docs/release.md`.
 - Do not bump package versions, create git tags, or publish to TestPyPI/PyPI
 without explicit user approval.
@@ -127,7 +128,6 @@ briefly-ai/
 |   `-- diagrams/           # Mermaid source and rendered SVG diagrams
 |
 |-- docs/
-|   |-- RELEASE_v0.2.md
 |   |-- progress.md
 |   |-- release.md
 |   |-- tech_spec.md
