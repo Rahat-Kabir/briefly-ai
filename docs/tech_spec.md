@@ -110,6 +110,10 @@ Current supported input kinds:
 
 - `-` reads text from stdin.
 - Existing local files are read as UTF-8 text.
+- Local audio/video files are transcribed when extraction or briefing needs
+  text.
+- Local `.pdf` files are extracted with pdfplumber when extraction or briefing
+  needs text.
 - `http` and `https` URLs are fetched when extraction or briefing needs text.
 - Any other value is treated as literal text.
 
@@ -185,6 +189,32 @@ cache without manual flushing.
 
 Remote PDFs use the normal URL extraction cache key and output format slot.
 
+## Local Media
+
+Local audio/video paths are routed through Groq Whisper before extract or
+briefing work continues.
+
+Flow:
+
+- `resolve_input_target` detects supported media suffixes and returns
+  `kind="audio"` or `kind="video"` with no eager read.
+- Supported direct-upload suffixes are `.mp3`, `.m4a`, `.wav`, `.ogg`,
+  `.flac`, `.mpeg`, `.mpga`, `.mp4`, and `.webm`.
+- The CLI `_resolve_media_input` checks the media transcript cache first.
+- Cache misses require `GROQ_API_KEY`, enforce the direct upload size limit,
+  and POST the file to Groq's OpenAI-compatible transcription endpoint.
+- `whisper-large-v3-turbo` is the default; `BRIEFLY_GROQ_WHISPER_MODEL` may
+  override it.
+- `--extract` prints only the transcript. Normal briefing mode sends the
+  transcript into the existing `BriefingRequest` and LLM flow.
+
+Cache uses `cache_kind="media_transcript"` with the absolute path as the key
+and `text:<mtime_ns>:<size>:<model>` as the format slot, so edits and model
+changes invalidate the transcript cache.
+
+Large-file audio extraction, chunking, timestamps, speaker labels, and batch
+transcription are deferred.
+
 ## Cache
 
 Briefly stores cache data in:
@@ -202,6 +232,8 @@ Current behavior:
 - Summary cache avoids repeated model calls for the same input/model/options.
 - URL cache keys include output format, so text and Markdown entries are
   separate.
+- Local media transcript cache avoids repeated Groq transcription calls for the
+  same file, mtime, size, and Whisper model.
 - Summary cache keys include brief type, so the same source can produce
   separate standard, executive, action, study, and decision briefs.
 - `--skip-cache` bypasses cache reads and writes.

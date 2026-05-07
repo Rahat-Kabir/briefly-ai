@@ -5,6 +5,27 @@ This is the per-feature development log. Add one entry per completed version.
 Note: versions before the first PyPI release are internal development
 milestones. The first public package release starts at `0.1.0`.
 
+## v0.3.3 - Local Media Input
+
+Why: brief local audio and video files by transcribing them first.
+
+Completed:
+
+- Added `briefly_core/audio.py` with shared Groq transcription helpers.
+- Routed local audio/video paths through `audio` and `video` input kinds.
+- Reused the shared Groq helper from YouTube's no-caption fallback.
+- Added direct local media transcript caching by path, mtime, size, and model.
+- Added clear errors for missing `GROQ_API_KEY`, oversized files, unsupported
+  media types, rate limits, and empty Groq responses.
+- Added core and CLI tests for local media extract, briefing, JSON, cache,
+  invalidation, and skip-cache paths.
+
+Not built yet:
+
+- Audio extraction or chunking for large media.
+- Speaker labels, timestamps, subtitles, or batch transcription.
+- Non-Groq transcription providers.
+
 ## v0.3.2 - Brief Types
 
 Why: let users shape a brief for general reading, executive review, action

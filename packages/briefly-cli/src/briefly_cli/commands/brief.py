@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 
+from briefly_core.audio import groq_transcription_model, transcribe_local_media_file
 from briefly_core.briefing import BriefingOptions, build_briefing_request
 from briefly_core.cache import (
     get_summary_cache,
@@ -36,6 +37,7 @@ from briefly_core.youtube import (
 _YOUTUBE_CACHE_KIND = "youtube_transcript"
 _YOUTUBE_CACHE_FORMAT = "text"
 _PDF_CACHE_KIND = "pdf_extract"
+_MEDIA_CACHE_KIND = "media_transcript"
 
 
 @click.command(hidden=True)
@@ -345,6 +347,13 @@ async def _resolve_extractable_input(
             cache_ttl_days=cache_ttl_days,
         )
 
+    if resolved_input.kind in {"audio", "video"}:
+        return await _resolve_media_input(
+            resolved_input,
+            skip_cache=skip_cache,
+            cache_ttl_days=cache_ttl_days,
+        )
+
     if resolved_input.text is None:
         raise ValueError("Input did not resolve to text.")
     return resolved_input
@@ -388,6 +397,45 @@ def _resolved_pdf_input(extracted: ExtractedContent) -> ResolvedInput:
     else:
         text = extracted.text
     return ResolvedInput(kind="pdf", source=extracted.source, text=text)
+
+
+async def _resolve_media_input(
+    resolved_input: ResolvedInput,
+    *,
+    skip_cache: bool,
+    cache_ttl_days: float | None,
+) -> ResolvedInput:
+    path = Path(resolved_input.source)
+    cache_format = _media_cache_format(path)
+    if not skip_cache:
+        cached = _get_url_cache(
+            str(path),
+            cache_format,
+            cache_ttl_days,
+            cache_kind=_MEDIA_CACHE_KIND,
+        )
+        if cached is not None:
+            return _resolved_media_input(cached, kind=resolved_input.kind)
+
+    transcription = await transcribe_local_media_file(path)
+    extracted = ExtractedContent(source=str(path), title=None, text=transcription.text)
+    if not skip_cache:
+        set_url_cache(
+            str(path),
+            extracted,
+            output_format=cache_format,
+            cache_kind=_MEDIA_CACHE_KIND,
+        )
+    return _resolved_media_input(extracted, kind=resolved_input.kind)
+
+
+def _media_cache_format(path: Path) -> str:
+    stat = path.stat()
+    return f"text:{stat.st_mtime_ns}:{stat.st_size}:{groq_transcription_model()}"
+
+
+def _resolved_media_input(extracted: ExtractedContent, *, kind: str) -> ResolvedInput:
+    return ResolvedInput(kind=kind, source=extracted.source, text=extracted.text)
 
 
 async def _resolve_youtube_input(

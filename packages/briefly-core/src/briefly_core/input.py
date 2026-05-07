@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Callable, Literal
 from urllib.parse import urlparse
 
-InputKind = Literal["text", "file", "stdin", "url", "pdf"]
+from briefly_core.audio import is_supported_audio_path, is_supported_video_path
+
+InputKind = Literal["text", "file", "stdin", "url", "pdf", "audio", "video"]
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,10 @@ def resolve_input_target(
     if path.exists() and path.is_file():
         if path.suffix.lower() == ".pdf":
             return ResolvedInput(kind="pdf", source=str(path), text=None)
+        if is_supported_audio_path(path):
+            return ResolvedInput(kind="audio", source=str(path), text=None)
+        if is_supported_video_path(path):
+            return ResolvedInput(kind="video", source=str(path), text=None)
         return ResolvedInput(kind="file", source=str(path), text=path.read_text(encoding="utf-8"))
 
     return ResolvedInput(kind="text", source="literal", text=raw_input)

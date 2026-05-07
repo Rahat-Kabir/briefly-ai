@@ -47,3 +47,25 @@ def test_resolves_pdf_file_without_reading(tmp_path: Path) -> None:
         source=str(pdf_path),
         text=None,
     )
+
+
+def test_resolves_audio_file_without_reading(tmp_path: Path) -> None:
+    audio_path = tmp_path / "meeting.mp3"
+    audio_path.write_bytes(b"audio")
+
+    assert resolve_input_target(str(audio_path)) == ResolvedInput(
+        kind="audio",
+        source=str(audio_path),
+        text=None,
+    )
+
+
+def test_resolves_video_file_without_reading(tmp_path: Path) -> None:
+    video_path = tmp_path / "lecture.mp4"
+    video_path.write_bytes(b"video")
+
+    assert resolve_input_target(str(video_path)) == ResolvedInput(
+        kind="video",
+        source=str(video_path),
+        text=None,
+    )

@@ -14,6 +14,7 @@ from xml.etree import ElementTree
 
 import httpx
 
+from briefly_core.audio import TranscriptionResult, transcribe_file_with_groq
 from briefly_core.content import ExtractedContent
 
 _DEFAULT_TIMEOUT_SECONDS = 15.0
@@ -31,10 +32,6 @@ _VIDEO_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{11}")
 _INNERTUBE_API_KEY_PATTERN = re.compile(r'"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"')
 _FMT_QUERY_PATTERN = re.compile(r"([?&])fmt=[^&]*(&|$)")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
-_DEFAULT_GROQ_WHISPER_MODEL = "whisper-large-v3-turbo"
-_GROQ_TRANSCRIPTIONS_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-
-
 @dataclass(frozen=True)
 class CaptionSegment:
     start_ms: int
@@ -349,12 +346,15 @@ async def _fetch_groq_whisper_transcript(
 
     with tempfile.TemporaryDirectory(prefix="briefly-youtube-") as temp_dir:
         audio_path = await _download_youtube_audio(url, Path(temp_dir))
-        return await _transcribe_audio_with_groq(
+        transcription = await transcribe_file_with_groq(
             audio_path,
-            video_id=video_id,
-            title=title,
             api_key=api_key,
             client=client,
+        )
+        return _transcription_to_youtube_transcript(
+            transcription,
+            video_id=video_id,
+            title=title,
         )
 
 
@@ -387,103 +387,27 @@ async def _download_youtube_audio(url: str, output_dir: Path) -> Path:
     return audio_files[0]
 
 
-async def _transcribe_audio_with_groq(
-    audio_path: Path,
+def _transcription_to_youtube_transcript(
+    transcription: TranscriptionResult,
     *,
     video_id: str,
     title: str | None,
-    api_key: str,
-    client: httpx.AsyncClient,
 ) -> YoutubeTranscript:
-    model = os.environ.get("BRIEFLY_GROQ_WHISPER_MODEL") or _DEFAULT_GROQ_WHISPER_MODEL
-    files = {
-        "file": (
-            audio_path.name,
-            audio_path.read_bytes(),
-            _audio_content_type(audio_path),
-        )
-    }
-    response = await client.post(
-        _GROQ_TRANSCRIPTIONS_URL,
-        headers={"Authorization": f"Bearer {api_key}"},
-        data={
-            "model": model,
-            "response_format": "verbose_json",
-            "temperature": "0",
-        },
-        files=files,
-    )
-    if response.status_code != 200:
-        raise RuntimeError(f"Groq transcription failed: HTTP {response.status_code}")
-
-    try:
-        payload = response.json()
-    except ValueError as error:
-        raise RuntimeError("Groq transcription returned invalid JSON.") from error
-    if not isinstance(payload, dict):
-        raise RuntimeError("Groq transcription returned an invalid response.")
-
-    text = payload.get("text")
-    if not isinstance(text, str) or not text.strip():
-        raise RuntimeError("Groq transcription returned empty text.")
-
-    segments = _groq_segments_to_caption_segments(payload)
-    if not segments:
-        segments = (CaptionSegment(start_ms=0, duration_ms=0, text=text.strip()),)
-
     return YoutubeTranscript(
         video_id=video_id,
         title=title,
         language_code=None,
         is_auto_generated=True,
-        text=text.strip(),
-        segments=segments,
-    )
-
-
-def _groq_segments_to_caption_segments(payload: dict[str, Any]) -> tuple[CaptionSegment, ...]:
-    raw_segments = payload.get("segments")
-    if not isinstance(raw_segments, list):
-        return ()
-
-    segments: list[CaptionSegment] = []
-    for segment in raw_segments:
-        if not isinstance(segment, dict):
-            continue
-        text = segment.get("text")
-        if not isinstance(text, str) or not text.strip():
-            continue
-        start_ms = _seconds_to_ms(segment.get("start"))
-        end_ms = _seconds_to_ms(segment.get("end"))
-        segments.append(
+        text=transcription.text,
+        segments=tuple(
             CaptionSegment(
-                start_ms=start_ms,
-                duration_ms=max(0, end_ms - start_ms),
-                text=text.strip(),
+                start_ms=segment.start_ms,
+                duration_ms=segment.duration_ms,
+                text=segment.text,
             )
-        )
-    return tuple(segments)
-
-
-def _seconds_to_ms(raw: object) -> int:
-    if not isinstance(raw, int | float) or isinstance(raw, bool):
-        return 0
-    return max(0, int(raw * 1000))
-
-
-def _audio_content_type(path: Path) -> str:
-    suffix = path.suffix.lower()
-    if suffix == ".mp3":
-        return "audio/mpeg"
-    if suffix == ".m4a":
-        return "audio/mp4"
-    if suffix == ".ogg":
-        return "audio/ogg"
-    if suffix == ".wav":
-        return "audio/wav"
-    if suffix == ".webm":
-        return "audio/webm"
-    return "application/octet-stream"
+            for segment in transcription.segments
+        ),
+    )
 
 
 def _normalize_caption_url(url: str) -> str:

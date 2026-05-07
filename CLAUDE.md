@@ -79,9 +79,12 @@ briefing.
   audio download and `GROQ_API_KEY`.
 - Local and remote PDF briefing through pdfplumber, with mtime-keyed cache for
   local PDFs.
+- Local audio/video transcription and briefing through Groq Whisper, with
+  mtime/size/model-keyed transcript cache.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
-mocked LLM behavior, flag parsing, input resolution, and config loading.
+mocked LLM behavior, flag parsing, input resolution, media transcription, and
+config loading.
 - README and docs baseline.
 
 ## Product Naming
@@ -135,6 +138,7 @@ briefly-ai/
 |   |   |-- pyproject.toml
 |   |   `-- src/briefly_core/
 |   |       |-- __init__.py
+|   |       |-- audio.py
 |   |       |-- briefing.py
 |   |       |-- cache.py
 |   |       |-- content.py
@@ -169,10 +173,12 @@ briefly-ai/
     |   |-- test_extract.py
     |   |-- test_help.py
     |   |-- test_json_output.py
+    |   |-- test_media_cli.py
     |   |-- test_pdf_cli.py
     |   |-- test_stream.py
     |   `-- test_youtube_cli.py
     `-- core/
+        |-- test_audio.py
         |-- test_briefing.py
         |-- test_cache.py
         |-- test_content.py
@@ -234,6 +240,8 @@ briefly my-file.txt --extract
 briefly https://example.com
 briefly my-file.txt --length long
 briefly meeting.txt --brief-type action
+briefly meeting.mp3 --extract
+briefly lecture.mp4 --brief-type study
 briefly daemon --help
 briefly slides --help
 briefly transcriber setup --help
@@ -278,7 +286,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 156 passed
+pytest: 174 passed
 ruff: All checks passed
 ```
 

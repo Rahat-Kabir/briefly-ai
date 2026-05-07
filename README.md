@@ -1,7 +1,7 @@
 # Briefly AI
 
-Python CLI for creating concise briefs from text, files, URLs, YouTube videos,
-and PDFs.
+Python CLI for creating concise briefs from text, files, URLs, PDFs, local
+audio/video, and YouTube videos.
 
 ![Briefly AI hero image](assets/briefly-ai-hero.png)
 
@@ -12,6 +12,7 @@ Diagrams are kept in `assets/diagrams/` as Mermaid source and SVG renders.
 - Plain text
 - Local text/Markdown files
 - Local and remote PDFs
+- Local audio/video via Groq Whisper
 - Web pages
 - YouTube videos with captions
 - YouTube videos without captions via Groq Whisper fallback
@@ -195,9 +196,9 @@ print extracted text, and generate length-controlled text briefs through
 LiteLLM. Brief types shape the prompt for standard, executive, action, study,
 and decision-focused output. Config-backed model selection,
 trafilatura-backed HTML URL briefing, YouTube caption briefing, Groq Whisper
-fallback, token streaming, structured JSON output, and local cache are
-available. YouTube transcript timestamps are available in extract and briefing
-input.
+fallback, local media transcription, token streaming, structured JSON output,
+and local cache are available. YouTube transcript timestamps are available in
+extract and briefing input.
 
 ### Brief a file
 
@@ -211,6 +212,20 @@ uv run briefly https://example.com/paper.pdf --extract
 Local and remote PDF input uses pdfplumber; the title comes from PDF metadata
 when present, otherwise the filename or URL. Scanned/image-only PDFs raise a
 clear error.
+
+### Brief local audio or video
+
+```powershell
+$env:GROQ_API_KEY='your_groq_api_key'
+uv run briefly meeting.mp3 --extract
+uv run briefly meeting.mp3
+uv run briefly lecture.mp4 --extract
+```
+
+Local media input sends supported files directly to Groq Whisper, caches the
+transcript, and uses that text for extract or briefing mode. Supported first
+slice: `.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`, `.mpeg`, `.mpga`, `.mp4`, and
+`.webm`. Files over the direct upload limit fail clearly until chunking exists.
 
 ### Brief a YouTube video
 
@@ -354,6 +369,7 @@ briefly-ai/
 |   |   |-- pyproject.toml
 |   |   `-- src/briefly_core/
 |   |       |-- __init__.py
+|   |       |-- audio.py
 |   |       |-- briefing.py
 |   |       |-- cache.py
 |   |       |-- content.py
@@ -388,10 +404,12 @@ briefly-ai/
 |   |   |-- test_extract.py
 |   |   |-- test_help.py
 |   |   |-- test_json_output.py
+|   |   |-- test_media_cli.py
 |   |   |-- test_pdf_cli.py
 |   |   |-- test_stream.py
 |   |   `-- test_youtube_cli.py
 |   `-- core/
+|       |-- test_audio.py
 |       |-- test_briefing.py
 |       |-- test_cache.py
 |       |-- test_content.py
