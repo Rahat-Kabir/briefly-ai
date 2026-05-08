@@ -311,3 +311,37 @@ Before large feature work:
 - Build it.
 - Run tests.
 - Describe what changed and what remains intentionally unbuilt.
+
+## Cursor Cloud specific instructions
+
+This is a pure Python CLI project managed with `uv`. No external services,
+databases, or Docker containers are needed.
+
+### Environment
+
+- Python 3.12 is pre-installed on the VM.
+- `uv` is installed to `$HOME/.local/bin`. Ensure `PATH` includes it:
+  `export PATH="$HOME/.local/bin:$PATH"`.
+- The update script runs `uv sync` which installs all workspace dependencies
+  into `.venv/` at the repo root.
+
+### Running commands
+
+All commands use `uv run` from the repo root (no need to activate the venv):
+
+```bash
+uv run pytest          # 174 tests, all mocked, no network needed
+uv run ruff check      # linting
+uv run briefly --help  # CLI help
+uv run briefly "text" --extract  # extract mode (no LLM key needed)
+```
+
+### Notes
+
+- The AGENTS.md mentions a Windows-specific `$env:UV_CACHE_DIR='.uv-cache'`
+  workaround. This is **not needed** on Linux; standard `uv sync` / `uv run`
+  work fine.
+- All 174 tests are fully mocked (LLM, HTTP, YouTube, Groq) and pass with zero
+  network access.
+- To test LLM-backed briefing, set `OPENAI_API_KEY` (or another provider key)
+  and run: `uv run briefly "some text" --model openai/gpt-4o-mini`.
