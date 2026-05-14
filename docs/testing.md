@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 174 passed
+pytest: 187 passed
 ruff: All checks passed
 ```
 
@@ -39,6 +39,7 @@ tests/
     test_json_output.py
     test_media_cli.py
     test_pdf_cli.py
+    test_short_input_hint.py
     test_stream.py
     test_youtube_cli.py
   core/
@@ -60,6 +61,8 @@ tests/
 - Root input command routing.
 - Briefing request construction.
 - Brief type, length preset, and output-format prompt behavior.
+- Short-input hint behavior, including stderr output and suppression in
+  `--extract`, `--json`, and long-form length paths.
 - URL HTML extraction, Markdown mode, trafilatura fallback behavior, and URL
   briefing routing.
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
@@ -73,6 +76,8 @@ tests/
 - Remote PDF URL extraction by content type or `.pdf` URL path.
 - Mocked LLM client behavior, including streaming chunks.
 - CLI streaming on/off/auto paths and error reporting.
+- CLI assertions use Click's split `result.stdout` and `result.stderr` streams
+  where output channel matters.
 - Structured JSON output for extract mode, briefing mode, cache hits, and
   stream-disabled JSON mode, including `briefType`.
 - Config-backed model resolution and `config init`.
