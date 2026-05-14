@@ -8,22 +8,22 @@ runner = CliRunner()
 def test_root_help() -> None:
     result = runner.invoke(app, ["--help"], color=False)
     assert result.exit_code == 0
-    assert "Create concise briefs from text, files, and URLs." in result.output
-    assert "--extract-only" in result.output
-    assert "--max-input-chars" in result.output
-    assert "--brief-type" in result.output
-    assert "--timestamps" in result.output
-    assert "cache" in result.output
-    assert "config" in result.output
-    assert "slides" in result.output
-    assert "daemon" in result.output
-    assert "transcriber" in result.output
+    assert "Create concise briefs from text, files, and URLs." in result.stdout
+    assert "--extract-only" in result.stdout
+    assert "--max-input-chars" in result.stdout
+    assert "--brief-type" in result.stdout
+    assert "--timestamps" in result.stdout
+    assert "cache" in result.stdout
+    assert "config" in result.stdout
+    assert "slides" in result.stdout
+    assert "daemon" in result.stdout
+    assert "transcriber" in result.stdout
 
 
 def test_version() -> None:
     result = runner.invoke(app, ["--version"], color=False)
     assert result.exit_code == 0
-    assert "briefly 0.1.0" in result.output
+    assert "briefly 0.1.0" in result.stdout
 
 
 def test_command_help() -> None:
@@ -41,7 +41,7 @@ def test_command_help() -> None:
 def test_brief_placeholder() -> None:
     result = runner.invoke(app, ["Some text to brief."], color=False)
     assert result.exit_code != 0
-    assert "Model is required before briefing can run." in result.output
+    assert "Model is required before briefing can run." in result.stderr
 
 
 def test_brief_prints_generated_result(monkeypatch) -> None:
@@ -58,7 +58,7 @@ def test_brief_prints_generated_result(monkeypatch) -> None:
     )
 
     assert result.exit_code == 0
-    assert result.output == "Generated brief.\n"
+    assert result.stdout == "Generated brief.\n"
 
 
 def test_url_briefing_extracts_then_generates(monkeypatch) -> None:
@@ -91,7 +91,7 @@ def test_url_briefing_extracts_then_generates(monkeypatch) -> None:
     )
 
     assert result.exit_code == 0
-    assert result.output == "Generated URL brief.\n"
+    assert result.stdout == "Generated URL brief.\n"
 
 
 def test_url_briefing_can_use_markdown_input(monkeypatch) -> None:
@@ -122,7 +122,7 @@ def test_url_briefing_can_use_markdown_input(monkeypatch) -> None:
     )
 
     assert result.exit_code == 0
-    assert result.output == "Generated Markdown brief.\n"
+    assert result.stdout == "Generated Markdown brief.\n"
 
 
 def test_brief_type_reaches_briefing_request(monkeypatch) -> None:
@@ -140,14 +140,14 @@ def test_brief_type_reaches_briefing_request(monkeypatch) -> None:
     )
 
     assert result.exit_code == 0
-    assert result.output == "Action brief.\n"
+    assert result.stdout == "Action brief.\n"
 
 
 def test_root_validates_flags() -> None:
     result = runner.invoke(app, ["https://example.com", "--length", "1"], color=False)
     assert result.exit_code != 0
-    assert "Unsupported --length" in result.output
+    assert "Unsupported --length" in result.stderr
 
     result = runner.invoke(app, ["https://example.com", "--brief-type", "technical"], color=False)
     assert result.exit_code != 0
-    assert "Unsupported --brief-type" in result.output
+    assert "Unsupported --brief-type" in result.stderr

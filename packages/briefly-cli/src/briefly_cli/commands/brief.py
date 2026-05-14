@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 
 from briefly_core.audio import groq_transcription_model, transcribe_local_media_file
-from briefly_core.briefing import BriefingOptions, build_briefing_request
+from briefly_core.briefing import BriefingOptions, build_briefing_request, short_input_hint
 from briefly_core.cache import (
     get_summary_cache,
     get_url_cache,
@@ -158,6 +158,11 @@ def brief(
         briefing_request = build_briefing_request(resolved_briefing_input, briefing_options)
     except Exception as error:
         raise click.ClickException(str(error)) from error
+
+    if not json_output:
+        hint = short_input_hint(briefing_request.text, briefing_request.options.length)
+        if hint is not None:
+            click.echo(hint, err=True)
 
     if not skip_cache:
         cached_summary = _get_summary_cache(briefing_request, _cache_ttl_days(config))

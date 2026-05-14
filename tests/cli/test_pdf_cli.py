@@ -81,8 +81,8 @@ def test_extract_pdf_prints_text(tmp_path: Path) -> None:
 
     result = runner.invoke(app, [str(pdf_path), "--extract"], color=False)
 
-    assert result.exit_code == 0, result.output
-    assert "Document body text" in result.output
+    assert result.exit_code == 0, result.stdout
+    assert "Document body text" in result.stdout
 
 
 def test_extract_pdf_json_output(tmp_path: Path) -> None:
@@ -90,8 +90,8 @@ def test_extract_pdf_json_output(tmp_path: Path) -> None:
 
     result = runner.invoke(app, [str(pdf_path), "--extract", "--json"], color=False)
 
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(result.stdout)
     assert payload["input"]["kind"] == "pdf"
     assert payload["input"]["source"] == str(pdf_path)
     assert payload["extracted"]["kind"] == "pdf"
@@ -118,8 +118,8 @@ def test_briefing_pdf(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         color=False,
     )
 
-    assert result.exit_code == 0, result.output
-    assert result.output.strip() == "BRIEFED"
+    assert result.exit_code == 0, result.stdout
+    assert result.stdout.strip() == "BRIEFED"
     assert "Briefing input from PDF" in str(captured["text"])
     assert captured["kind"] == "pdf"
     assert captured["model"] == "openai/gpt-5-mini"
@@ -138,12 +138,12 @@ def test_pdf_extraction_uses_cache(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
     monkeypatch.setattr("briefly_cli.commands.brief.extract_pdf", counting_extract)
 
     first = runner.invoke(app, [str(pdf_path), "--extract"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
     second = runner.invoke(app, [str(pdf_path), "--extract"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert extract_calls["count"] == 1
-    assert first.output == second.output
+    assert first.stdout == second.stdout
 
 
 def test_pdf_cache_invalidated_on_mtime_change(
@@ -161,7 +161,7 @@ def test_pdf_cache_invalidated_on_mtime_change(
     monkeypatch.setattr("briefly_cli.commands.brief.extract_pdf", counting_extract)
 
     first = runner.invoke(app, [str(pdf_path), "--extract"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
 
     pdf_path.write_bytes(_make_test_pdf(["Updated body"]))
     new_time = pdf_path.stat().st_mtime + 5
@@ -170,10 +170,10 @@ def test_pdf_cache_invalidated_on_mtime_change(
     os.utime(pdf_path, (new_time, new_time))
 
     second = runner.invoke(app, [str(pdf_path), "--extract"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert extract_calls["count"] == 2
-    assert "Updated body" in second.output
+    assert "Updated body" in second.stdout
 
 
 def test_pdf_skip_cache_re_extracts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -189,8 +189,8 @@ def test_pdf_skip_cache_re_extracts(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     monkeypatch.setattr("briefly_cli.commands.brief.extract_pdf", counting_extract)
 
     first = runner.invoke(app, [str(pdf_path), "--extract", "--skip-cache"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
     second = runner.invoke(app, [str(pdf_path), "--extract", "--skip-cache"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert extract_calls["count"] == 2

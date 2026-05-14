@@ -306,6 +306,11 @@ uv run briefly --help
 | `--timestamps` | Include YouTube transcript timestamps when available |
 | `--skip-cache` | Skip cache reads and writes |
 
+When the resolved input is already short for the requested `--length` (≤80 words
+for `short`, ≤180 for `medium`, ≤350 for `long`), Briefly prints a one-line
+hint on stderr suggesting `--extract`. The brief still runs. The hint is
+suppressed in `--extract`, `--json`, and `--length xl`/`xxl`.
+
 ### Cache
 
 Briefly stores URL extraction and summary results in `~/.briefly/cache.sqlite`.

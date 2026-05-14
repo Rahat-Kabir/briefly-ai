@@ -5,6 +5,12 @@ from dataclasses import dataclass, replace
 from briefly_core.flags import BriefLength, BriefType, ExtractFormat, LengthArg
 from briefly_core.input import InputKind, ResolvedInput
 
+_SHORT_INPUT_HINT_THRESHOLDS: dict[BriefLength, int] = {
+    "short": 80,
+    "medium": 180,
+    "long": 350,
+}
+
 _PRESET_MAX_OUTPUT_TOKENS: dict[BriefLength, int] = {
     "short": 120,
     "medium": 300,
@@ -101,6 +107,20 @@ def build_briefing_request(
         text=text,
         prompt=_build_prompt(text, resolved_options),
         options=resolved_options,
+    )
+
+
+def short_input_hint(text: str, length: LengthArg) -> str | None:
+    if length.kind != "preset" or length.preset is None:
+        return None
+    threshold = _SHORT_INPUT_HINT_THRESHOLDS.get(length.preset)
+    if threshold is None:
+        return None
+    word_count = len(text.split())
+    if word_count == 0 or word_count > threshold:
+        return None
+    return (
+        f"note: input is {word_count} words — consider --extract to skip the model"
     )
 
 

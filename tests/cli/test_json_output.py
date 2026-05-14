@@ -13,7 +13,7 @@ def test_extract_json_outputs_structured_literal_text() -> None:
     result = runner.invoke(app, ["Briefly reads text.", "--extract", "--json"], color=False)
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["input"] == {
         "kind": "text",
         "source": "literal",
@@ -58,7 +58,7 @@ def test_extract_json_outputs_structured_url_text(monkeypatch: pytest.MonkeyPatc
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["input"]["kind"] == "url"
     assert payload["input"]["source"] == "https://example.com"
     assert payload["input"]["format"] == "markdown"
@@ -87,7 +87,7 @@ def test_brief_json_outputs_prompt_llm_summary_and_cache_status(
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["input"]["kind"] == "text"
     assert payload["input"]["source"] == "literal"
     assert payload["input"]["model"] == "test/model"
@@ -123,7 +123,7 @@ def test_brief_json_outputs_selected_brief_type(monkeypatch: pytest.MonkeyPatch)
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert payload["input"]["briefType"] == "decision"
     assert payload["summary"] == "Decision brief."
 
@@ -151,8 +151,8 @@ def test_brief_json_cache_hit_avoids_generate_brief(monkeypatch: pytest.MonkeyPa
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    first_payload = json.loads(first.output)
-    second_payload = json.loads(second.output)
+    first_payload = json.loads(first.stdout)
+    second_payload = json.loads(second.stdout)
     assert calls == 1
     assert first_payload["cache"] == {"enabled": True, "summaryHit": False}
     assert second_payload["cache"] == {"enabled": True, "summaryHit": True}
@@ -182,6 +182,6 @@ def test_brief_json_disables_streaming(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     assert result.exit_code == 0
-    payload = json.loads(result.output)
+    payload = json.loads(result.stdout)
     assert streamed == []
     assert payload["summary"] == "Whole brief."

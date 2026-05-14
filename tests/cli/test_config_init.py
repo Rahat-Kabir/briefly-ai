@@ -19,7 +19,7 @@ def test_config_init_creates_config(monkeypatch, tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert f"Wrote config: {config_path}" in result.output
+    assert f"Wrote config: {config_path}" in result.stdout
     assert json.loads(config_path.read_text(encoding="utf-8")) == {
         "model": "openai/gpt-4o-mini"
     }
@@ -37,7 +37,7 @@ def test_config_init_refuses_existing_config(monkeypatch, tmp_path: Path) -> Non
     )
 
     assert result.exit_code != 0
-    assert f"Config already exists: {config_path}" in result.output
+    assert f"Config already exists: {config_path}" in result.stderr
     assert json.loads(config_path.read_text(encoding="utf-8")) == {"model": "existing/model"}
 
 
@@ -64,7 +64,7 @@ def test_config_init_requires_raw_model_id(monkeypatch, tmp_path: Path) -> None:
     result = runner.invoke(app, ["config", "init", "--model", "fast"], color=False)
 
     assert result.exit_code != 0
-    assert "Model must be a raw model id" in result.output
+    assert "Model must be a raw model id" in result.stderr
 
 
 def test_config_init_requires_resolvable_config_path(monkeypatch) -> None:
@@ -80,4 +80,4 @@ def test_config_init_requires_resolvable_config_path(monkeypatch) -> None:
     )
 
     assert result.exit_code != 0
-    assert "Could not resolve config path. Set BRIEFLY_CONFIG." in result.output
+    assert "Could not resolve config path. Set BRIEFLY_CONFIG." in result.stderr

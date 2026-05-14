@@ -81,6 +81,11 @@ Current behavior:
 - `--format text` asks for plain text without Markdown formatting.
 - `--format markdown` allows Markdown output.
 - Empty text is rejected.
+- When the resolved input is already at or below the word-count threshold for
+  the requested length preset (`short` 80, `medium` 180, `long` 350), the CLI
+  prints a one-line hint on stderr suggesting `--extract`; the brief still
+  runs. Suppressed for `--extract`, `--json`, `xl`, `xxl`, and char-count
+  lengths.
 
 ## LLM
 

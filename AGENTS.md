@@ -82,6 +82,8 @@ briefing.
   local PDFs.
 - Local audio/video transcription and briefing through Groq Whisper, with
   mtime/size/model-keyed transcript cache.
+- Short-input hint on stderr when input is already at or below the threshold
+  for the requested length preset; the brief still runs.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
 - Tests for CLI help, extract mode, JSON output, streaming, briefing requests,
 mocked LLM behavior, flag parsing, input resolution, media transcription, and

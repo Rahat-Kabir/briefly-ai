@@ -1,6 +1,6 @@
 import pytest
 
-from briefly_core.briefing import BriefingOptions, build_briefing_request
+from briefly_core.briefing import BriefingOptions, build_briefing_request, short_input_hint
 from briefly_core.flags import LengthArg
 from briefly_core.input import ResolvedInput
 
@@ -170,3 +170,48 @@ def test_builds_briefing_request_from_extracted_url_text() -> None:
     assert request.input_kind == "url"
     assert request.source == "https://example.com/final"
     assert request.text == "Example Domain\n\nThis domain is for examples."
+
+
+def test_short_input_hint_returns_hint_at_or_below_threshold() -> None:
+    text = " ".join(["word"] * 60)
+    hint = short_input_hint(text, LengthArg(kind="preset", preset="short"))
+    assert hint is not None
+    assert "60 words" in hint
+    assert "--extract" in hint
+
+
+def test_short_input_hint_threshold_is_inclusive() -> None:
+    text = " ".join(["w"] * 80)
+    assert short_input_hint(text, LengthArg(kind="preset", preset="short")) is not None
+
+
+def test_short_input_hint_returns_none_above_threshold() -> None:
+    text = " ".join(["w"] * 81)
+    assert short_input_hint(text, LengthArg(kind="preset", preset="short")) is None
+
+
+def test_short_input_hint_uses_medium_threshold() -> None:
+    medium = LengthArg(kind="preset", preset="medium")
+    assert short_input_hint(" ".join(["w"] * 180), medium) is not None
+    assert short_input_hint(" ".join(["w"] * 181), medium) is None
+
+
+def test_short_input_hint_uses_long_threshold() -> None:
+    long_arg = LengthArg(kind="preset", preset="long")
+    assert short_input_hint(" ".join(["w"] * 350), long_arg) is not None
+    assert short_input_hint(" ".join(["w"] * 351), long_arg) is None
+
+
+def test_short_input_hint_disabled_for_xl_and_xxl() -> None:
+    text = " ".join(["w"] * 10)
+    assert short_input_hint(text, LengthArg(kind="preset", preset="xl")) is None
+    assert short_input_hint(text, LengthArg(kind="preset", preset="xxl")) is None
+
+
+def test_short_input_hint_disabled_for_chars_length() -> None:
+    text = " ".join(["w"] * 10)
+    assert short_input_hint(text, LengthArg(kind="chars", max_characters=500)) is None
+
+
+def test_short_input_hint_handles_empty_text() -> None:
+    assert short_input_hint("   ", LengthArg(kind="preset", preset="short")) is None

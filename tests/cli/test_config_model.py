@@ -27,7 +27,7 @@ def test_uses_default_model_from_config(monkeypatch, tmp_path: Path) -> None:
     result = runner.invoke(app, ["Source text."], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Configured brief.\n"
+    assert result.stdout == "Configured brief.\n"
 
 
 def test_uses_named_default_model_from_config(monkeypatch, tmp_path: Path) -> None:
@@ -43,7 +43,7 @@ def test_uses_named_default_model_from_config(monkeypatch, tmp_path: Path) -> No
     result = runner.invoke(app, ["Source text."], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Named default brief.\n"
+    assert result.stdout == "Named default brief.\n"
 
 
 def test_resolves_named_model_preset_from_option(monkeypatch, tmp_path: Path) -> None:
@@ -59,7 +59,7 @@ def test_resolves_named_model_preset_from_option(monkeypatch, tmp_path: Path) ->
     result = runner.invoke(app, ["Source text.", "--model", "fast"], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Fast brief.\n"
+    assert result.stdout == "Fast brief.\n"
 
 
 def test_explicit_model_id_overrides_config(monkeypatch, tmp_path: Path) -> None:
@@ -78,7 +78,7 @@ def test_explicit_model_id_overrides_config(monkeypatch, tmp_path: Path) -> None
     result = runner.invoke(app, ["Source text.", "--model", "override/model"], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Override brief.\n"
+    assert result.stdout == "Override brief.\n"
 
 
 def test_missing_model_keeps_required_model_error(monkeypatch, tmp_path: Path) -> None:
@@ -87,7 +87,7 @@ def test_missing_model_keeps_required_model_error(monkeypatch, tmp_path: Path) -
     result = runner.invoke(app, ["Source text."], color=False)
 
     assert result.exit_code != 0
-    assert "Model is required before briefing can run." in result.output
+    assert "Model is required before briefing can run." in result.stderr
 
 
 def test_unknown_model_preset_reports_error(monkeypatch, tmp_path: Path) -> None:
@@ -97,4 +97,4 @@ def test_unknown_model_preset_reports_error(monkeypatch, tmp_path: Path) -> None
     result = runner.invoke(app, ["Source text.", "--model", "missing"], color=False)
 
     assert result.exit_code != 0
-    assert "Unknown model preset: missing" in result.output
+    assert "Unknown model preset: missing" in result.stderr

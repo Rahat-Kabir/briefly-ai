@@ -10,7 +10,7 @@ def test_extracts_literal_text() -> None:
     result = runner.invoke(app, ["Briefly reads text.", "--extract"], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Briefly reads text.\n"
+    assert result.stdout == "Briefly reads text.\n"
 
 
 def test_extracts_local_file() -> None:
@@ -21,14 +21,14 @@ def test_extracts_local_file() -> None:
         result = runner.invoke(app, ["notes.txt", "--extract"], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Briefly reads files.\n"
+    assert result.stdout == "Briefly reads files.\n"
 
 
 def test_extracts_stdin() -> None:
     result = runner.invoke(app, ["-", "--extract"], input="Briefly reads stdin.", color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Briefly reads stdin.\n"
+    assert result.stdout == "Briefly reads stdin.\n"
 
 
 def test_extracts_url(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -49,7 +49,7 @@ def test_extracts_url(monkeypatch: pytest.MonkeyPatch) -> None:
     result = runner.invoke(app, ["https://example.com", "--extract"], color=False)
 
     assert result.exit_code == 0
-    assert result.output == "Example Domain\n\nThis domain is for examples.\n"
+    assert result.stdout == "Example Domain\n\nThis domain is for examples.\n"
 
 
 def test_extracts_url_as_markdown(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -74,7 +74,7 @@ def test_extracts_url_as_markdown(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     assert result.exit_code == 0
-    assert result.output == "Example Domain\n\n# Heading\n\nA [link](https://example.com).\n"
+    assert result.stdout == "Example Domain\n\n# Heading\n\nA [link](https://example.com).\n"
 
 
 def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,4 +86,4 @@ def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
     result = runner.invoke(app, ["https://example.com/data.json", "--extract"], color=False)
 
     assert result.exit_code != 0
-    assert "URL did not return HTML content: application/json" in result.output
+    assert "URL did not return HTML content: application/json" in result.stderr

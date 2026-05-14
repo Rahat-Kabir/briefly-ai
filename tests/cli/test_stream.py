@@ -28,7 +28,7 @@ def test_stream_on_writes_chunks_in_order(monkeypatch: pytest.MonkeyPatch) -> No
     )
 
     assert result.exit_code == 0
-    assert result.output == "Brief in pieces.\n"
+    assert result.stdout == "Brief in pieces.\n"
 
 
 def test_stream_on_keeps_trailing_newline(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,7 +44,7 @@ def test_stream_on_keeps_trailing_newline(monkeypatch: pytest.MonkeyPatch) -> No
     )
 
     assert result.exit_code == 0
-    assert result.output == "Done.\n"
+    assert result.stdout == "Done.\n"
 
 
 def test_stream_off_uses_non_streaming_path(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -71,7 +71,7 @@ def test_stream_off_uses_non_streaming_path(monkeypatch: pytest.MonkeyPatch) -> 
     )
 
     assert result.exit_code == 0
-    assert result.output == "Whole brief.\n"
+    assert result.stdout == "Whole brief.\n"
     assert streamed == []
 
 
@@ -101,7 +101,7 @@ def test_stream_auto_uses_non_streaming_path_without_tty(
     )
 
     assert result.exit_code == 0
-    assert result.output == "Whole brief.\n"
+    assert result.stdout == "Whole brief.\n"
     assert streamed == []
 
 
@@ -122,4 +122,4 @@ def test_stream_failure_reports_error(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     assert result.exit_code != 0
-    assert "Model returned an empty briefing." in result.output
+    assert "Model returned an empty briefing." in result.stderr

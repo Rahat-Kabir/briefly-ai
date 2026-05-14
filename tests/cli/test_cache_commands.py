@@ -22,10 +22,10 @@ def test_cache_stats_reports_counts(tmp_path: Path) -> None:
     result = runner.invoke(app, ["cache", "stats"], color=False)
 
     assert result.exit_code == 0
-    assert f"Cache: {cache_path}" in result.output
-    assert "Exists: yes" in result.output
-    assert "URL entries: 1" in result.output
-    assert "Summary entries: 1" in result.output
+    assert f"Cache: {cache_path}" in result.stdout
+    assert "Exists: yes" in result.stdout
+    assert "URL entries: 1" in result.stdout
+    assert "Summary entries: 1" in result.stdout
 
 
 def test_cache_clear_removes_entries(tmp_path: Path) -> None:
@@ -35,13 +35,13 @@ def test_cache_clear_removes_entries(tmp_path: Path) -> None:
     result = runner.invoke(app, ["cache", "clear"], color=False)
 
     assert result.exit_code == 0
-    assert f"Cleared cache: {cache_path}" in result.output
-    assert "URL entries removed: 1" in result.output
-    assert "Summary entries removed: 1" in result.output
+    assert f"Cleared cache: {cache_path}" in result.stdout
+    assert "URL entries removed: 1" in result.stdout
+    assert "Summary entries removed: 1" in result.stdout
 
     stats = runner.invoke(app, ["cache", "stats"], color=False)
-    assert "URL entries: 0" in stats.output
-    assert "Summary entries: 0" in stats.output
+    assert "URL entries: 0" in stats.stdout
+    assert "Summary entries: 0" in stats.stdout
 
 
 def test_configured_ttl_expires_summary_cache(monkeypatch, tmp_path: Path) -> None:
@@ -61,8 +61,8 @@ def test_configured_ttl_expires_summary_cache(monkeypatch, tmp_path: Path) -> No
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert first.output == "Brief 1.\n"
-    assert second.output == "Brief 2.\n"
+    assert first.stdout == "Brief 1.\n"
+    assert second.stdout == "Brief 2.\n"
     assert calls == 2
 
 
@@ -91,8 +91,8 @@ def test_configured_ttl_expires_url_cache(monkeypatch, tmp_path: Path) -> None:
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert first.output == "Title 1\n\nText 1.\n"
-    assert second.output == "Title 2\n\nText 2.\n"
+    assert first.stdout == "Title 1\n\nText 1.\n"
+    assert second.stdout == "Title 2\n\nText 2.\n"
     assert calls == 2
 
 

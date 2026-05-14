@@ -33,8 +33,8 @@ def test_extract_local_audio(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
     result = runner.invoke(app, [str(media_path), "--extract"], color=False)
 
-    assert result.exit_code == 0, result.output
-    assert result.output == "Meeting transcript.\n"
+    assert result.exit_code == 0, result.stdout
+    assert result.stdout == "Meeting transcript.\n"
 
 
 def test_extract_local_video(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -43,8 +43,8 @@ def test_extract_local_video(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
     result = runner.invoke(app, [str(media_path), "--extract"], color=False)
 
-    assert result.exit_code == 0, result.output
-    assert result.output == "Lecture transcript.\n"
+    assert result.exit_code == 0, result.stdout
+    assert result.stdout == "Lecture transcript.\n"
 
 
 def test_extract_local_audio_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -53,8 +53,8 @@ def test_extract_local_audio_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
 
     result = runner.invoke(app, [str(media_path), "--extract", "--json"], color=False)
 
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(result.stdout)
     assert payload["input"]["kind"] == "audio"
     assert payload["input"]["source"] == str(media_path)
     assert payload["extracted"] == {
@@ -85,8 +85,8 @@ def test_briefing_local_audio(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
         color=False,
     )
 
-    assert result.exit_code == 0, result.output
-    assert result.output.strip() == "BRIEFED"
+    assert result.exit_code == 0, result.stdout
+    assert result.stdout.strip() == "BRIEFED"
     assert captured["text"] == "Briefing input from audio"
     assert captured["kind"] == "audio"
     assert captured["model"] == "openai/gpt-5-mini"
@@ -106,12 +106,12 @@ def test_media_transcription_uses_cache(
     monkeypatch.setattr("briefly_cli.commands.brief.transcribe_local_media_file", fake_transcribe)
 
     first = runner.invoke(app, [str(media_path), "--extract"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
     second = runner.invoke(app, [str(media_path), "--extract"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert calls["count"] == 1
-    assert first.output == second.output
+    assert first.stdout == second.stdout
 
 
 def test_media_cache_invalidated_on_mtime_change(
@@ -132,17 +132,17 @@ def test_media_cache_invalidated_on_mtime_change(
     monkeypatch.setattr("briefly_cli.commands.brief.transcribe_local_media_file", fake_transcribe)
 
     first = runner.invoke(app, [str(media_path), "--extract"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
 
     media_path.write_bytes(b"updated-audio")
     new_time = media_path.stat().st_mtime + 5
     os.utime(media_path, (new_time, new_time))
 
     second = runner.invoke(app, [str(media_path), "--extract"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert calls["count"] == 2
-    assert "Transcript 2." in second.output
+    assert "Transcript 2." in second.stdout
 
 
 def test_media_skip_cache_retranscribes(
@@ -159,9 +159,9 @@ def test_media_skip_cache_retranscribes(
     monkeypatch.setattr("briefly_cli.commands.brief.transcribe_local_media_file", fake_transcribe)
 
     first = runner.invoke(app, [str(media_path), "--extract", "--skip-cache"], color=False)
-    assert first.exit_code == 0, first.output
+    assert first.exit_code == 0, first.stdout
     second = runner.invoke(app, [str(media_path), "--extract", "--skip-cache"], color=False)
-    assert second.exit_code == 0, second.output
+    assert second.exit_code == 0, second.stdout
 
     assert calls["count"] == 2
 
@@ -176,7 +176,7 @@ def test_local_media_missing_groq_key_errors(
     result = runner.invoke(app, [str(media_path), "--extract"], color=False)
 
     assert result.exit_code != 0
-    assert "GROQ_API_KEY is required" in result.output
+    assert "GROQ_API_KEY is required" in result.stderr
 
 
 def test_local_media_oversized_file_errors(tmp_path: Path) -> None:
@@ -187,4 +187,4 @@ def test_local_media_oversized_file_errors(tmp_path: Path) -> None:
     result = runner.invoke(app, [str(media_path), "--extract"], color=False)
 
     assert result.exit_code != 0
-    assert "too large for direct Groq upload" in result.output
+    assert "too large for direct Groq upload" in result.stderr

@@ -22,6 +22,12 @@ Completed:
   media types, rate limits, and empty Groq responses.
 - Added core and CLI tests for local media extract, briefing, JSON, cache,
   invalidation, and skip-cache paths.
+- Added a short-input hint on stderr when resolved input is already at or below
+  the word-count threshold for the requested length preset (short 80, medium
+  180, long 350), suggesting `--extract` while still running the brief.
+  Suppressed in `--extract`, `--json`, and `xl`/`xxl` lengths.
+- Migrated CLI tests from `result.output` to `result.stdout`/`result.stderr` to
+  match Click 8.3's separate stream capture.
 
 Possible before release:
 

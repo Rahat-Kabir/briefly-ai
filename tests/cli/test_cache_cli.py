@@ -28,8 +28,8 @@ def test_url_cache_hit_avoids_extract_url(monkeypatch) -> None:
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert first.output == "Example\n\nCached page text.\n"
-    assert second.output == first.output
+    assert first.stdout == "Example\n\nCached page text.\n"
+    assert second.stdout == first.stdout
     assert calls == 1
 
 
@@ -56,8 +56,8 @@ def test_summary_cache_hit_avoids_generate_brief(monkeypatch) -> None:
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert first.output == "Cached brief.\n"
-    assert second.output == first.output
+    assert first.stdout == "Cached brief.\n"
+    assert second.stdout == first.stdout
     assert calls == 1
 
 
@@ -116,7 +116,7 @@ def test_skip_cache_bypasses_url_and_summary_cache(monkeypatch) -> None:
     )
 
     assert fresh.exit_code == 0
-    assert fresh.output == "Fresh brief.\n"
+    assert fresh.stdout == "Fresh brief.\n"
     assert fresh_calls == {"extract": 1, "generate": 1}
 
 
@@ -143,6 +143,6 @@ def test_summary_cache_key_depends_on_brief_options(monkeypatch) -> None:
 
     assert short.exit_code == 0
     assert long.exit_code == 0
-    assert short.output == "Short brief.\n"
-    assert long.output == "Long brief.\n"
+    assert short.stdout == "Short brief.\n"
+    assert long.stdout == "Long brief.\n"
     assert calls == ["short", "long"]
