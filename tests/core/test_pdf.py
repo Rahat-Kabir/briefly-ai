@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from typing import Any
+
 import pytest
 
-from briefly_core.pdf import extract_pdf
+from briefly_core.content import ExtractedContent
+from briefly_core.pdf import (
+    extract_pdf,
+    extract_pdf_via_vision,
+    has_extractable_pdf_text,
+)
 
 
 def _make_test_pdf(pages: list[str], *, title: str | None = None) -> bytes:
@@ -116,12 +123,75 @@ def test_extract_pdf_falls_back_to_filename_stem(tmp_path: Path) -> None:
     assert result.title == "research-notes"
 
 
-def test_extract_pdf_raises_on_empty_text(tmp_path: Path) -> None:
+def test_extract_pdf_returns_empty_content_for_scanned_pdf(tmp_path: Path) -> None:
     pdf_path = tmp_path / "blank.pdf"
     pdf_path.write_bytes(_make_test_pdf([""]))
 
-    with pytest.raises(ValueError, match="no extractable text"):
-        extract_pdf(pdf_path)
+    result = extract_pdf(pdf_path)
+
+    assert result.text == ""
+    assert not has_extractable_pdf_text(result)
+
+
+def test_has_extractable_pdf_text_threshold() -> None:
+    short_content = ExtractedContent(source="x", title=None, text="short")
+    long_content = ExtractedContent(
+        source="x",
+        title=None,
+        text="a" * 50,
+    )
+    just_below = ExtractedContent(
+        source="x",
+        title=None,
+        text="a" * 49,
+    )
+
+    assert not has_extractable_pdf_text(short_content)
+    assert has_extractable_pdf_text(long_content)
+    assert not has_extractable_pdf_text(just_below)
+
+
+def test_has_extractable_pdf_text_ignores_whitespace() -> None:
+    only_whitespace = ExtractedContent(
+        source="x",
+        title=None,
+        text=" \n\t " * 100,
+    )
+    assert not has_extractable_pdf_text(only_whitespace)
+
+
+def test_extract_pdf_via_vision_uses_litellm(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pdf_path = tmp_path / "scanned.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4\n% fake scanned pdf bytes\n")
+
+    captured: dict[str, Any] = {}
+
+    async def fake_acompletion(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return {
+            "choices": [{"message": {"content": "Page one transcript."}}]
+        }
+
+    import litellm
+
+    monkeypatch.setattr(litellm, "acompletion", fake_acompletion)
+
+    async def run() -> ExtractedContent:
+        return await extract_pdf_via_vision(pdf_path, "gemini/gemini-2.5-flash-lite")
+
+    import asyncio
+
+    result = asyncio.run(run())
+
+    assert result.text == "Page one transcript."
+    assert result.source == str(pdf_path)
+    assert captured["model"] == "gemini/gemini-2.5-flash-lite"
+    content = captured["messages"][0]["content"]
+    assert content[0]["type"] == "text"
+    assert "PDF" in content[0]["text"]
+    assert content[1]["image_url"]["url"].startswith("data:application/pdf;base64,")
 
 
 def test_extract_pdf_joins_multiple_pages(tmp_path: Path) -> None:

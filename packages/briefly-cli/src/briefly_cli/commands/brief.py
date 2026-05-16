@@ -17,6 +17,7 @@ from briefly_core.cache import (
 from briefly_core.config import ConfigData, load_config
 from briefly_core.content import ExtractedContent, extract_url
 from briefly_core.image import extract_text_from_image
+from briefly_core.pdf import extract_pdf, extract_pdf_via_vision, has_extractable_pdf_text
 from briefly_core.flags import (
     StreamMode,
     parse_brief_type,
@@ -28,7 +29,6 @@ from briefly_core.flags import (
 )
 from briefly_core.input import ResolvedInput, resolve_input_target
 from briefly_core.llm import generate_brief, generate_brief_stream
-from briefly_core.pdf import extract_pdf
 from briefly_core.youtube import (
     fetch_youtube_transcript,
     is_youtube_url,
@@ -359,6 +359,7 @@ async def _resolve_extractable_input(
     if resolved_input.kind == "pdf":
         return await _resolve_pdf_input(
             Path(resolved_input.source),
+            vision_model=vision_model,
             skip_cache=skip_cache,
             cache_ttl_days=cache_ttl_days,
         )
@@ -386,10 +387,11 @@ async def _resolve_extractable_input(
 async def _resolve_pdf_input(
     path: Path,
     *,
+    vision_model: str | None,
     skip_cache: bool,
     cache_ttl_days: float | None,
 ) -> ResolvedInput:
-    cache_format = _pdf_cache_format(path)
+    cache_format = _pdf_cache_format(path, vision_model)
     if not skip_cache:
         cached = _get_url_cache(
             str(path),
@@ -401,6 +403,16 @@ async def _resolve_pdf_input(
             return _resolved_pdf_input(cached)
 
     extracted = await asyncio.to_thread(extract_pdf, path)
+    if not has_extractable_pdf_text(extracted):
+        if not vision_model:
+            raise RuntimeError(
+                f"PDF has no extractable text layer (likely scanned): {path}. "
+                "Set vision.model in ~/.briefly/config.json (for example "
+                "gemini/gemini-2.5-flash-lite) or pass --vision-model to enable "
+                "OCR fallback."
+            )
+        extracted = await extract_pdf_via_vision(path, vision_model)
+
     if not skip_cache:
         set_url_cache(
             str(path),
@@ -411,8 +423,9 @@ async def _resolve_pdf_input(
     return _resolved_pdf_input(extracted)
 
 
-def _pdf_cache_format(path: Path) -> str:
-    return f"text:{path.stat().st_mtime_ns}"
+def _pdf_cache_format(path: Path, vision_model: str | None) -> str:
+    suffix = vision_model or ""
+    return f"text:{path.stat().st_mtime_ns}:{suffix}"
 
 
 def _resolved_pdf_input(extracted: ExtractedContent) -> ResolvedInput:

@@ -39,6 +39,15 @@ Completed:
   mapping, vision-message shape, error wrapping, empty response, extract mode,
   briefing mode, JSON output, cache hit, mtime invalidation, skip-cache, and
   config-driven vision model resolution.
+- Added scanned-PDF fallback for local PDFs. `extract_pdf` now returns
+  whatever pdfplumber yields (possibly empty); when non-whitespace text is
+  under 50 chars, the CLI calls `extract_pdf_via_vision` with the resolved
+  vision model. Factored the vision LiteLLM call into `extract_text_via_vision`
+  in `briefly_core/image.py` so images and PDFs share it. PDF cache slot now
+  includes the vision model. Remote PDF URLs still raise on empty for now.
+- Added core and CLI tests: threshold detector, vision-message shape for PDF
+  MIME, fallback triggers on scanned PDFs, text PDFs skip the fallback,
+  missing-vision-model error, and cache invalidation on vision-model change.
 
 Possible before release:
 

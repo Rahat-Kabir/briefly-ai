@@ -47,14 +47,39 @@ async def extract_text_from_image(path: Path, model: str) -> str:
             "Set vision.model in ~/.briefly/config.json or pass --vision-model."
         )
 
+    return await extract_text_via_vision(
+        data=path.read_bytes(),
+        mime=image_content_type(path),
+        model=model,
+        prompt=VISION_EXTRACTION_PROMPT,
+        source=str(path),
+        media_label="image",
+    )
+
+
+async def extract_text_via_vision(
+    *,
+    data: bytes,
+    mime: str,
+    model: str,
+    prompt: str,
+    source: str,
+    media_label: str,
+) -> str:
+    if not model:
+        raise ValueError(
+            f"A vision-capable model is required to read {media_label}s. "
+            "Set vision.model in ~/.briefly/config.json or pass --vision-model."
+        )
+
     import litellm
 
-    data_url = _build_data_url(path)
+    data_url = _build_data_url(data, mime)
     messages = [
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": VISION_EXTRACTION_PROMPT},
+                {"type": "text", "text": prompt},
                 {"type": "image_url", "image_url": {"url": data_url}},
             ],
         }
@@ -64,24 +89,24 @@ async def extract_text_from_image(path: Path, model: str) -> str:
         response = await litellm.acompletion(model=model, messages=messages)
     except Exception as error:
         raise RuntimeError(
-            f"Image extraction failed with model '{model}': {error}. "
-            "If this model does not support image input, set vision.model in "
-            "~/.briefly/config.json to a vision-capable model (for example "
-            "gemini/gemini-2.5-flash-lite) or pass --vision-model."
+            f"{media_label.capitalize()} extraction failed with model '{model}': "
+            f"{error}. If this model does not support {media_label} input, set "
+            "vision.model in ~/.briefly/config.json to a vision-capable model "
+            "(for example gemini/gemini-2.5-flash-lite) or pass --vision-model."
         ) from error
 
     text = _response_text(response)
     cleaned = text.strip()
     if not cleaned:
         raise RuntimeError(
-            f"Vision model '{model}' returned empty text for image: {path}"
+            f"Vision model '{model}' returned empty text for {media_label}: {source}"
         )
     return cleaned
 
 
-def _build_data_url(path: Path) -> str:
-    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-    return f"data:{image_content_type(path)};base64,{encoded}"
+def _build_data_url(data: bytes, mime: str) -> str:
+    encoded = base64.b64encode(data).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
 
 
 def _response_text(response: Any) -> str:

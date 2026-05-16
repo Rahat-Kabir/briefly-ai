@@ -85,6 +85,9 @@ briefing.
 - Local image briefing (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) through a
   vision LLM, with optional `vision.model` config block, `--vision-model`
   flag, and mtime/size/model-keyed extract cache.
+- Scanned-PDF fallback: local PDFs with no text layer (<50 non-whitespace
+  chars from pdfplumber) are sent to the configured vision model. Reuses
+  the existing `vision.model`/`--vision-model` resolution.
 - Short-input hint on stderr when input is already at or below the threshold
   for the requested length preset; the brief still runs.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
@@ -296,7 +299,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 204 passed
+pytest: 211 passed
 ruff: All checks passed
 ```
 

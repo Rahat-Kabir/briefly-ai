@@ -194,6 +194,14 @@ cache without manual flushing.
 
 Remote PDFs use the normal URL extraction cache key and output format slot.
 
+If `extract_pdf` yields fewer than 50 non-whitespace characters (likely a
+scanned PDF), the CLI falls back to `extract_pdf_via_vision`, which sends the
+raw PDF bytes to the configured vision model with MIME `application/pdf`. The
+fallback requires a vision model; missing config produces a clear error
+pointing at `vision.model` / `--vision-model`. The PDF cache slot key now
+includes the vision model so switching models invalidates correctly. Remote
+PDF URLs do not yet use this fallback.
+
 ## Local Media
 
 Local audio/video paths are routed through Groq Whisper before extract or

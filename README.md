@@ -1,7 +1,7 @@
 # Briefly AI
 
-Python CLI for creating concise briefs from text, files, URLs, PDFs, local
-audio/video, local images, and YouTube videos.
+Python CLI for creating concise briefs from text, files, URLs, PDFs (including
+scanned), local audio/video, local images, and YouTube videos.
 
 ![Briefly AI hero image](assets/briefly-ai-hero.png)
 
@@ -11,7 +11,7 @@ Diagrams are kept in `assets/diagrams/` as Mermaid source and SVG renders.
 
 - Plain text
 - Local text/Markdown files
-- Local and remote PDFs
+- Local and remote PDFs (scanned local PDFs fall back to a vision LLM)
 - Local audio/video via Groq Whisper
 - Local images (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) via vision LLM
 - Web pages
@@ -211,8 +211,10 @@ uv run briefly https://example.com/paper.pdf --extract
 ```
 
 Local and remote PDF input uses pdfplumber; the title comes from PDF metadata
-when present, otherwise the filename or URL. Scanned/image-only PDFs raise a
-clear error.
+when present, otherwise the filename or URL. Local PDFs with no extractable
+text layer (under 50 non-whitespace chars, e.g. scans) fall back to the
+configured vision model (`vision.model` / `--vision-model`); set one or you
+will get a clear error. Remote/URL PDFs do not yet have this fallback.
 
 ### Brief local audio or video
 
