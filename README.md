@@ -1,7 +1,7 @@
 # Briefly AI
 
 Python CLI for creating concise briefs from text, files, URLs, PDFs, local
-audio/video, and YouTube videos.
+audio/video, local images, and YouTube videos.
 
 ![Briefly AI hero image](assets/briefly-ai-hero.png)
 
@@ -13,6 +13,7 @@ Diagrams are kept in `assets/diagrams/` as Mermaid source and SVG renders.
 - Local text/Markdown files
 - Local and remote PDFs
 - Local audio/video via Groq Whisper
+- Local images (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) via vision LLM
 - Web pages
 - YouTube videos with captions
 - YouTube videos without captions via Groq Whisper fallback
@@ -227,6 +228,36 @@ transcript, and uses that text for extract or briefing mode. Supported first
 slice: `.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`, `.mpeg`, `.mpga`, `.mp4`, and
 `.webm`. Files over the direct upload limit fail clearly until chunking exists.
 
+### Brief a local image
+
+```powershell
+$env:GEMINI_API_KEY='your_gemini_api_key'
+uv run briefly screenshot.png --extract
+uv run briefly screenshot.png
+uv run briefly slide.jpg --brief-type study
+uv run briefly photo.webp --vision-model gemini/gemini-2.5-flash-lite
+```
+
+Image input is sent to a vision-capable model (recommended:
+`gemini/gemini-2.5-flash-lite`) which transcribes the visible text. The
+transcript is then briefed by your default `--model` (or printed directly
+when `--extract` is set). Supported extensions: `.png`, `.jpg`, `.jpeg`,
+`.webp`, `.gif`. Transcripts are cached by path, mtime, size, and vision
+model.
+
+Configure a default vision model in `~/.briefly/config.json`:
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "vision": { "model": "gemini/gemini-2.5-flash-lite" }
+}
+```
+
+Resolution order for the vision step: `--vision-model` flag, then
+`vision.model` in config, then `--model` flag, then `model` in config. If the
+resolved model does not support image input, Briefly fails with a clear hint.
+
 ### Brief a YouTube video
 
 ```powershell
@@ -296,6 +327,7 @@ uv run briefly --help
 |------|-------------|
 | `--extract` | Print resolved input without briefing |
 | `--model TEXT` | LLM model id or configured model preset |
+| `--vision-model TEXT` | Vision model id or preset for image extraction (overrides `vision.model`) |
 | `--length TEXT` | Brief length: `short`, `medium`, `long`, `xl`, `xxl`, or a char count like `500` |
 | `--brief-type TEXT` | Brief type: `standard`, `executive`, `action`, `study`, or `decision` |
 | `--output-format TEXT` | Output format: `text` or `markdown` |
@@ -379,6 +411,7 @@ briefly-ai/
 |   |       |-- content.py
 |   |       |-- config.py
 |   |       |-- flags.py
+|   |       |-- image.py
 |   |       |-- input.py
 |   |       |-- llm.py
 |   |       |-- pdf.py
@@ -407,6 +440,7 @@ briefly-ai/
 |   |   |-- test_config_model.py
 |   |   |-- test_extract.py
 |   |   |-- test_help.py
+|   |   |-- test_image_cli.py
 |   |   |-- test_json_output.py
 |   |   |-- test_media_cli.py
 |   |   |-- test_pdf_cli.py
@@ -419,6 +453,7 @@ briefly-ai/
 |       |-- test_content.py
 |       |-- test_config.py
 |       |-- test_flags.py
+|       |-- test_image.py
 |       |-- test_input.py
 |       |-- test_llm.py
 |       |-- test_pdf.py

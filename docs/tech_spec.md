@@ -220,6 +220,32 @@ changes invalidate the transcript cache.
 Large-file audio extraction, chunking, timestamps, speaker labels, and batch
 transcription are deferred.
 
+## Local Images
+
+Local image paths are routed through a vision LLM before extract or briefing
+work continues.
+
+Flow:
+
+- `resolve_input_target` detects `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`
+  and returns `kind="image"` with no eager read.
+- The CLI `_resolve_image_input` resolves a vision model in this order:
+  `--vision-model` flag, `vision.model` in config, `--model` flag, default
+  `model` in config. If none resolves, briefing fails with a clear error.
+- Cache misses base64-encode the file and call `litellm.acompletion` with a
+  vision message: a text part asking for plain-text transcription and an
+  `image_url` part with a `data:<mime>;base64,...` URL.
+- LiteLLM errors are wrapped with a hint pointing at `vision.model`.
+- `--extract` prints only the transcribed text. Normal briefing mode sends
+  the text into the existing `BriefingRequest` and LLM flow, where the
+  default `model` writes the brief (vision is only used for extraction).
+
+Cache uses `cache_kind="image_extract"` with the absolute path as the key
+and `text:<mtime_ns>:<size>:<vision_model>` as the format slot, so edits and
+vision-model changes invalidate the cache.
+
+Scanned-PDF fallback, remote image URLs, and stdin image input are deferred.
+
 ## Cache
 
 Briefly stores cache data in:

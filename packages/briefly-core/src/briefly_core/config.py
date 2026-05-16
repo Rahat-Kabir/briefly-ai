@@ -75,7 +75,22 @@ def normalize_config(raw: Mapping[str, Any]) -> ConfigData:
     if "ui" in config:
         config["ui"] = _normalize_ui(config["ui"])
 
+    if "vision" in config:
+        config["vision"] = _normalize_vision(config["vision"])
+
     return config
+
+
+def _normalize_vision(raw: Any) -> ConfigData:
+    if isinstance(raw, str):
+        return _normalize_model(raw, "vision.model")
+    if not isinstance(raw, dict):
+        raise ValueError("vision must be a string or object")
+
+    vision: ConfigData = {}
+    if "model" in raw:
+        vision = _normalize_model(raw["model"], "vision.model")
+    return vision
 
 
 def _normalize_model(raw: Any, label: str) -> ConfigData:

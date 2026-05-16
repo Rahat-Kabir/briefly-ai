@@ -16,6 +16,7 @@ from briefly_core.cache import (
 )
 from briefly_core.config import ConfigData, load_config
 from briefly_core.content import ExtractedContent, extract_url
+from briefly_core.image import extract_text_from_image
 from briefly_core.flags import (
     StreamMode,
     parse_brief_type,
@@ -38,6 +39,7 @@ _YOUTUBE_CACHE_KIND = "youtube_transcript"
 _YOUTUBE_CACHE_FORMAT = "text"
 _PDF_CACHE_KIND = "pdf_extract"
 _MEDIA_CACHE_KIND = "media_transcript"
+_IMAGE_CACHE_KIND = "image_extract"
 
 
 @click.command(hidden=True)
@@ -51,6 +53,11 @@ _MEDIA_CACHE_KIND = "media_transcript"
 )
 @click.option("--length", default="medium", help="Brief length preset or character count.")
 @click.option("--model", default=None, help="Model id or configured model preset.")
+@click.option(
+    "--vision-model",
+    default=None,
+    help="Vision model id or preset for image extraction (overrides config vision.model).",
+)
 @click.option("--stream", default="auto", help="Streaming mode: auto, on, or off.")
 @click.option("--json", "json_output", is_flag=True, help="Output structured JSON.")
 @click.option("--timestamps", is_flag=True, help="Include transcript timestamps when available.")
@@ -69,6 +76,7 @@ def brief(
     brief_type: str,
     length: str,
     model: str | None,
+    vision_model: str | None,
     stream: str,
     json_output: bool,
     timestamps: bool,
@@ -108,6 +116,7 @@ def brief(
                     skip_cache=skip_cache,
                     cache_ttl_days=_cache_ttl_days(config),
                     timestamps=timestamps,
+                    vision_model=_resolve_vision_model(vision_model, model, config),
                 )
             )
         except Exception as error:
@@ -144,6 +153,7 @@ def brief(
                 skip_cache=skip_cache,
                 cache_ttl_days=_cache_ttl_days(config),
                 timestamps=timestamps,
+                vision_model=_resolve_vision_model(vision_model, model, config),
             )
         )
         resolved_model = _resolve_model(model, config)
@@ -325,6 +335,7 @@ async def _resolve_extractable_input(
     skip_cache: bool = False,
     cache_ttl_days: float | None = None,
     timestamps: bool = False,
+    vision_model: str | None = None,
 ) -> ResolvedInput:
     if resolved_input.kind == "url":
         if is_youtube_url(resolved_input.source):
@@ -355,6 +366,14 @@ async def _resolve_extractable_input(
     if resolved_input.kind in {"audio", "video"}:
         return await _resolve_media_input(
             resolved_input,
+            skip_cache=skip_cache,
+            cache_ttl_days=cache_ttl_days,
+        )
+
+    if resolved_input.kind == "image":
+        return await _resolve_image_input(
+            Path(resolved_input.source),
+            vision_model=vision_model,
             skip_cache=skip_cache,
             cache_ttl_days=cache_ttl_days,
         )
@@ -441,6 +460,67 @@ def _media_cache_format(path: Path) -> str:
 
 def _resolved_media_input(extracted: ExtractedContent, *, kind: str) -> ResolvedInput:
     return ResolvedInput(kind=kind, source=extracted.source, text=extracted.text)
+
+
+async def _resolve_image_input(
+    path: Path,
+    *,
+    vision_model: str | None,
+    skip_cache: bool,
+    cache_ttl_days: float | None,
+) -> ResolvedInput:
+    if not vision_model:
+        raise RuntimeError(
+            "A vision-capable model is required to brief images. "
+            "Set vision.model in ~/.briefly/config.json (for example "
+            "gemini/gemini-2.5-flash-lite) or pass --vision-model."
+        )
+
+    cache_format = _image_cache_format(path, vision_model)
+    if not skip_cache:
+        cached = _get_url_cache(
+            str(path),
+            cache_format,
+            cache_ttl_days,
+            cache_kind=_IMAGE_CACHE_KIND,
+        )
+        if cached is not None:
+            return ResolvedInput(kind="image", source=cached.source, text=cached.text)
+
+    text = await extract_text_from_image(path, vision_model)
+    extracted = ExtractedContent(source=str(path), title=None, text=text)
+    if not skip_cache:
+        set_url_cache(
+            str(path),
+            extracted,
+            output_format=cache_format,
+            cache_kind=_IMAGE_CACHE_KIND,
+        )
+    return ResolvedInput(kind="image", source=str(path), text=text)
+
+
+def _image_cache_format(path: Path, vision_model: str) -> str:
+    stat = path.stat()
+    return f"text:{stat.st_mtime_ns}:{stat.st_size}:{vision_model}"
+
+
+def _resolve_vision_model(
+    vision_model: str | None,
+    model: str | None,
+    config: ConfigData | None,
+) -> str | None:
+    if vision_model is not None:
+        value = vision_model.strip()
+        if "/" in value:
+            return value
+        return _resolve_named_model(value, config)
+
+    if config is not None:
+        vision_block = config.get("vision")
+        if isinstance(vision_block, dict) and vision_block:
+            return _resolve_config_model(vision_block, config)
+
+    return _resolve_model(model, config)
 
 
 async def _resolve_youtube_input(

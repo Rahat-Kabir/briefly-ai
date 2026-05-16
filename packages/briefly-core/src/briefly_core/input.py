@@ -6,8 +6,9 @@ from typing import Callable, Literal
 from urllib.parse import urlparse
 
 from briefly_core.audio import is_supported_audio_path, is_supported_video_path
+from briefly_core.image import is_supported_image_path
 
-InputKind = Literal["text", "file", "stdin", "url", "pdf", "audio", "video"]
+InputKind = Literal["text", "file", "stdin", "url", "pdf", "audio", "video", "image"]
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,8 @@ def resolve_input_target(
             return ResolvedInput(kind="audio", source=str(path), text=None)
         if is_supported_video_path(path):
             return ResolvedInput(kind="video", source=str(path), text=None)
+        if is_supported_image_path(path):
+            return ResolvedInput(kind="image", source=str(path), text=None)
         return ResolvedInput(kind="file", source=str(path), text=path.read_text(encoding="utf-8"))
 
     return ResolvedInput(kind="text", source="literal", text=raw_input)

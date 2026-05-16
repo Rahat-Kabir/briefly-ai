@@ -28,6 +28,17 @@ Completed:
   Suppressed in `--extract`, `--json`, and `xl`/`xxl` lengths.
 - Migrated CLI tests from `result.output` to `result.stdout`/`result.stderr` to
   match Click 8.3's separate stream capture.
+- Added local image extraction and briefing through a vision LLM. Supports
+  `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`. New `briefly_core/image.py` builds
+  a base64 vision message and calls `litellm.acompletion`. Added optional
+  `vision.model` config block and `--vision-model` CLI flag, with resolution
+  order: flag, `vision.model`, `--model`, default `model`. Cached transcripts
+  by path, mtime, size, and vision model under cache kind `image_extract`.
+  Wrapped LiteLLM errors with a hint pointing at `vision.model`.
+- Added core and CLI tests for image extension detection, content-type
+  mapping, vision-message shape, error wrapping, empty response, extract mode,
+  briefing mode, JSON output, cache hit, mtime invalidation, skip-cache, and
+  config-driven vision model resolution.
 
 Possible before release:
 

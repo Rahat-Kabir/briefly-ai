@@ -82,6 +82,9 @@ briefing.
   local PDFs.
 - Local audio/video transcription and briefing through Groq Whisper, with
   mtime/size/model-keyed transcript cache.
+- Local image briefing (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) through a
+  vision LLM, with optional `vision.model` config block, `--vision-model`
+  flag, and mtime/size/model-keyed extract cache.
 - Short-input hint on stderr when input is already at or below the threshold
   for the requested length preset; the brief still runs.
 - Placeholder subcommands: `daemon`, `slides`, `transcriber`.
@@ -146,6 +149,7 @@ briefly-ai/
 |   |       |-- content.py
 |   |       |-- config.py
 |   |       |-- flags.py
+|   |       |-- image.py
 |   |       |-- input.py
 |   |       |-- llm.py
 |   |       |-- pdf.py
@@ -174,6 +178,7 @@ briefly-ai/
     |   |-- test_config_model.py
     |   |-- test_extract.py
     |   |-- test_help.py
+    |   |-- test_image_cli.py
     |   |-- test_json_output.py
     |   |-- test_media_cli.py
     |   |-- test_pdf_cli.py
@@ -186,6 +191,7 @@ briefly-ai/
         |-- test_content.py
         |-- test_config.py
         |-- test_flags.py
+        |-- test_image.py
         |-- test_input.py
         |-- test_llm.py
         |-- test_pdf.py
@@ -244,6 +250,8 @@ briefly my-file.txt --length long
 briefly meeting.txt --brief-type action
 briefly meeting.mp3 --extract
 briefly lecture.mp4 --brief-type study
+briefly screenshot.png --extract
+briefly slide.jpg --brief-type study --vision-model gemini/gemini-2.5-flash-lite
 briefly daemon --help
 briefly slides --help
 briefly transcriber setup --help
@@ -288,7 +296,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 174 passed
+pytest: 204 passed
 ruff: All checks passed
 ```
 

@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 187 passed
+pytest: 204 passed
 ruff: All checks passed
 ```
 
@@ -36,6 +36,7 @@ tests/
     test_config_model.py
     test_extract.py
     test_help.py
+    test_image_cli.py
     test_json_output.py
     test_media_cli.py
     test_pdf_cli.py
@@ -49,6 +50,7 @@ tests/
     test_content.py
     test_config.py
     test_flags.py
+    test_image.py
     test_input.py
     test_llm.py
     test_pdf.py
@@ -70,6 +72,11 @@ tests/
 - Groq Whisper YouTube fallback with mocked audio download and API response.
 - Local audio/video transcription with mocked Groq responses, including cache
   hit, mtime invalidation, skip-cache, missing key, and oversized file errors.
+- Local image extraction with a mocked vision LLM, including extension
+  detection, content-type mapping, vision-message shape, error wrapping,
+  empty-response handling, extract/brief flows, JSON output, cache hit,
+  mtime invalidation, skip-cache, `--vision-model` override, and config
+  `vision.model` / fallback resolution.
 - PDF text extraction via pdfplumber, metadata title fallback, multi-page
   joining, empty-PDF error, and CLI cache hit / mtime invalidation /
   `--skip-cache` paths.
