@@ -6,6 +6,22 @@ PyPI package versions are the only versions. Active work belongs under the next
 chosen `Unreleased` package version. Do not create internal `vX.Y.Z` feature
 milestones.
 
+## v0.3.0 - Planned
+
+Why: Briefly promises long content in, concise brief out — but media over
+25 MB hard-fails and long text goes into a single prompt. Make "long" real.
+
+Planned:
+
+- Chunked map-reduce briefing for long resolved text, benefiting all input
+  kinds (long PDFs, articles, transcripts).
+- Media chunking to lift the 25 MB Groq upload limit; likely requires ffmpeg
+  as an external dependency (yt-dlp-style error when missing) — not decided.
+- Vision fallback for remote/URL scanned PDFs (may move into v0.2.0).
+
+Deferred: slides/docx extraction, daemon, non-Groq transcription, batch
+digests.
+
 ## v0.2.0 - Unreleased
 
 Why: expand Briefly beyond text, URLs, YouTube captions, and PDFs into richer
