@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+_DEFAULT_TIMEOUT_SECONDS = 300.0
+_DEFAULT_NUM_RETRIES = 2
 
 VISION_EXTRACTION_PROMPT = (
     "Transcribe everything visible in this image as plain text. "
@@ -74,6 +76,7 @@ async def extract_text_via_vision(
 
     import litellm
 
+    litellm.suppress_debug_info = True
     data_url = _build_data_url(data, mime)
     messages = [
         {
@@ -86,7 +89,12 @@ async def extract_text_via_vision(
     ]
 
     try:
-        response = await litellm.acompletion(model=model, messages=messages)
+        response = await litellm.acompletion(
+            model=model,
+            messages=messages,
+            timeout=_DEFAULT_TIMEOUT_SECONDS,
+            num_retries=_DEFAULT_NUM_RETRIES,
+        )
     except Exception as error:
         raise RuntimeError(
             f"{media_label.capitalize()} extraction failed with model '{model}': "

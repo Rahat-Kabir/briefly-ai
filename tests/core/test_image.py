@@ -76,6 +76,8 @@ def test_extract_text_from_image_calls_litellm_with_vision_message(
 
     assert result == "Extracted text."
     assert captured["model"] == "gemini/gemini-2.5-flash-lite"
+    assert captured["timeout"] == 300.0
+    assert captured["num_retries"] == 2
     messages = captured["messages"]
     assert len(messages) == 1
     content = messages[0]["content"]

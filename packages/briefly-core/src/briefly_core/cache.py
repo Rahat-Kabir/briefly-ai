@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
@@ -58,7 +60,7 @@ def get_url_cache(
     *,
     output_format: str = "text",
     cache_path: Path | None = None,
-    ttl_days: float | None = _DEFAULT_URL_TTL_DAYS,
+    ttl_days: float | None = None,
     cache_kind: str = "url_extract",
 ) -> ExtractedContent | None:
     path = cache_path or resolve_cache_path()
@@ -74,7 +76,7 @@ def get_url_cache(
 
     if row is None:
         return None
-    if _is_expired(row[3], ttl_days):
+    if _is_expired(row[3], _url_ttl_days(ttl_days)):
         return None
     return ExtractedContent(source=row[0], title=row[1], text=row[2])
 
@@ -85,6 +87,7 @@ def set_url_cache(
     *,
     output_format: str = "text",
     cache_path: Path | None = None,
+    ttl_days: float | None = None,
     cache_kind: str = "url_extract",
 ) -> None:
     path = cache_path or resolve_cache_path()
@@ -103,13 +106,14 @@ def set_url_cache(
             """,
             (key, requested_url, extracted.source, extracted.title, extracted.text, time.time()),
         )
+        _delete_expired(connection, "url_cache", _url_ttl_days(ttl_days))
 
 
 def get_summary_cache(
     request: BriefingRequest,
     *,
     cache_path: Path | None = None,
-    ttl_days: float | None = _DEFAULT_SUMMARY_TTL_DAYS,
+    ttl_days: float | None = None,
 ) -> SummaryCacheEntry | None:
     path = cache_path or resolve_cache_path()
     if path is None or not path.exists():
@@ -124,7 +128,7 @@ def get_summary_cache(
 
     if row is None:
         return None
-    if _is_expired(row[1], ttl_days):
+    if _is_expired(row[1], _summary_ttl_days(ttl_days)):
         return None
     return SummaryCacheEntry(text=row[0])
 
@@ -134,6 +138,7 @@ def set_summary_cache(
     text: str,
     *,
     cache_path: Path | None = None,
+    ttl_days: float | None = None,
 ) -> None:
     path = cache_path or resolve_cache_path()
     if path is None:
@@ -158,6 +163,7 @@ def set_summary_cache(
                 time.time(),
             ),
         )
+        _delete_expired(connection, "summary_cache", _summary_ttl_days(ttl_days))
 
 
 def get_cache_stats(*, cache_path: Path | None = None) -> CacheStats:
@@ -233,10 +239,15 @@ def summary_cache_key(request: BriefingRequest) -> str:
     )
 
 
-def _connect(path: Path) -> sqlite3.Connection:
+@contextmanager
+def _connect(path: Path) -> Iterator[sqlite3.Connection]:
     connection = sqlite3.connect(path)
-    _ensure_schema(connection)
-    return connection
+    try:
+        with connection:
+            _ensure_schema(connection)
+            yield connection
+    finally:
+        connection.close()
 
 
 def _ensure_schema(connection: sqlite3.Connection) -> None:
@@ -271,10 +282,24 @@ def _count_rows(connection: sqlite3.Connection, table: str) -> int:
     return int(row[0])
 
 
-def _is_expired(created_at: float, ttl_days: float | None) -> bool:
-    if ttl_days is None:
-        return False
-    return created_at < time.time() - (ttl_days * 24 * 60 * 60)
+def _is_expired(created_at: float, ttl_days: float) -> bool:
+    return created_at < _expiry_cutoff(ttl_days)
+
+
+def _delete_expired(connection: sqlite3.Connection, table: str, ttl_days: float) -> None:
+    connection.execute(f"DELETE FROM {table} WHERE created_at < ?", (_expiry_cutoff(ttl_days),))
+
+
+def _expiry_cutoff(ttl_days: float) -> float:
+    return time.time() - (ttl_days * 24 * 60 * 60)
+
+
+def _url_ttl_days(ttl_days: float | None) -> float:
+    return _DEFAULT_URL_TTL_DAYS if ttl_days is None else ttl_days
+
+
+def _summary_ttl_days(ttl_days: float | None) -> float:
+    return _DEFAULT_SUMMARY_TTL_DAYS if ttl_days is None else ttl_days
 
 
 def _hash_payload(payload: Mapping[str, Any]) -> str:

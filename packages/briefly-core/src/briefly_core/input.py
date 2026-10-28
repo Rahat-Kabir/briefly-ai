@@ -41,7 +41,14 @@ def resolve_input_target(
             return ResolvedInput(kind="video", source=str(path), text=None)
         if is_supported_image_path(path):
             return ResolvedInput(kind="image", source=str(path), text=None)
-        return ResolvedInput(kind="file", source=str(path), text=path.read_text(encoding="utf-8"))
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as error:
+            raise ValueError(
+                f"File is not UTF-8 text: {path}. "
+                "Save it as UTF-8 or use a supported file type."
+            ) from error
+        return ResolvedInput(kind="file", source=str(path), text=text)
 
     return ResolvedInput(kind="text", source="literal", text=raw_input)
 

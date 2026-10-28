@@ -41,10 +41,10 @@ def test_loads_and_normalizes_config(tmp_path: Path) -> None:
     config_path = write_config(
         tmp_path,
         {
-            "model": "auto",
-            "output": {"language": " en ", "length": "long"},
-            "cache": {"enabled": True, "maxMb": 256, "ttlDays": 14, "path": " cache.db "},
-            "ui": {"theme": "moss"},
+            "model": "fast",
+            "models": {"fast": " openai/gpt-5-mini "},
+            "cache": {"ttlDays": 14},
+            "vision": {"model": "gemini/gemini-2.5-flash-lite"},
         },
     )
 
@@ -52,15 +52,14 @@ def test_loads_and_normalizes_config(tmp_path: Path) -> None:
 
     assert loaded.path == config_path
     assert loaded.config == {
-        "model": {"mode": "auto"},
-        "output": {"language": "en", "length": "long"},
-        "cache": {"enabled": True, "maxMb": 256, "ttlDays": 14, "path": "cache.db"},
-        "ui": {"theme": "moss"},
+        "model": {"name": "fast"},
+        "models": {"fast": {"id": "openai/gpt-5-mini"}},
+        "cache": {"ttlDays": 14},
+        "vision": {"id": "gemini/gemini-2.5-flash-lite"},
     }
 
 
 def test_normalizes_model_shorthand() -> None:
-    assert normalize_config({"model": "auto"}) == {"model": {"mode": "auto"}}
     assert normalize_config({"model": "openai/gpt-5-mini"}) == {
         "model": {"id": "openai/gpt-5-mini"}
     }
@@ -117,25 +116,31 @@ def test_rejects_invalid_model_values() -> None:
     with pytest.raises(ValueError, match='model must include "id"'):
         normalize_config({"model": {}})
 
-    with pytest.raises(ValueError, match='model.mode must be "auto"'):
-        normalize_config({"model": {"mode": "manual"}})
+    with pytest.raises(ValueError, match="Unsupported config key: model.mode"):
+        normalize_config({"model": {"mode": "auto"}})
+
+    with pytest.raises(ValueError, match="Unsupported config key: models.fast.rules"):
+        normalize_config({"models": {"fast": {"id": "openai/gpt-5-mini", "rules": []}}})
 
 
-def test_rejects_invalid_sections() -> None:
-    with pytest.raises(ValueError, match="output.length"):
-        normalize_config({"output": {"length": 123}})
+def test_rejects_unsupported_keys() -> None:
+    with pytest.raises(ValueError, match="Unsupported config key: output, ui"):
+        normalize_config({"output": {"length": "long"}, "ui": {"theme": "moss"}})
 
-    with pytest.raises(ValueError, match="Unsupported --length"):
-        normalize_config({"output": {"length": "1"}})
+    with pytest.raises(ValueError, match="Unsupported config key: modle"):
+        normalize_config({"modle": "openai/gpt-5-mini"})
 
-    with pytest.raises(ValueError, match="cache.enabled"):
-        normalize_config({"cache": {"enabled": "yes"}})
+    with pytest.raises(
+        ValueError,
+        match="Unsupported config key: cache.enabled, cache.maxMb, cache.path",
+    ):
+        normalize_config({"cache": {"enabled": True, "maxMb": 256, "path": "cache.db"}})
 
-    with pytest.raises(ValueError, match="ui.theme"):
-        normalize_config({"ui": {"theme": 7}})
+    with pytest.raises(ValueError, match="Unsupported config key: vision.detail"):
+        normalize_config({"vision": {"model": "gemini/gemini-2.5-flash-lite", "detail": "high"}})
 
 
-def test_rejects_reserved_auto_model_name() -> None:
-    with pytest.raises(ValueError, match="reserved"):
-        normalize_config({"models": {"auto": "openai/gpt-5-mini"}})
+def test_rejects_invalid_cache_ttl() -> None:
+    with pytest.raises(ValueError, match="cache.ttlDays must be a positive number"):
+        normalize_config({"cache": {"ttlDays": 0}})
 

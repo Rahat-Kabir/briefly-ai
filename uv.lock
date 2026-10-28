@@ -218,11 +218,11 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
-    { name = "click", specifier = ">=8.0" },
+    { name = "click", specifier = ">=8.3" },
     { name = "httpx", specifier = ">=0.28" },
-    { name = "litellm", specifier = ">=1.0" },
+    { name = "litellm", specifier = ">=1.83,<2" },
     { name = "markdownify", specifier = ">=1.2.2" },
-    { name = "pdfplumber", specifier = ">=0.11" },
+    { name = "pdfplumber", specifier = ">=0.11.9" },
     { name = "trafilatura", specifier = ">=2.0" },
 ]
 
@@ -244,7 +244,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "briefly-core", editable = "packages/briefly-core" },
-    { name = "click", specifier = ">=8.0" },
+    { name = "click", specifier = ">=8.3" },
 ]
 
 [[package]]
@@ -264,9 +264,9 @@ dependencies = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "httpx", specifier = ">=0.28" },
-    { name = "litellm", specifier = ">=1.0" },
+    { name = "litellm", specifier = ">=1.83,<2" },
     { name = "markdownify", specifier = ">=1.2.2" },
-    { name = "pdfplumber", specifier = ">=0.11" },
+    { name = "pdfplumber", specifier = ">=0.11.9" },
     { name = "trafilatura", specifier = ">=2.0" },
 ]
 

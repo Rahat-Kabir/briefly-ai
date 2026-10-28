@@ -6,8 +6,6 @@ import os
 from pathlib import Path
 from typing import Any, Mapping
 
-from briefly_core.flags import parse_length_arg
-
 ConfigData = dict[str, Any]
 
 
@@ -58,25 +56,20 @@ def parse_config_text(raw: str, path: str | Path = "config.json") -> ConfigData:
 
 
 def normalize_config(raw: Mapping[str, Any]) -> ConfigData:
-    config = dict(raw)
+    _reject_unsupported_keys(raw, {"model", "models", "cache", "vision"}, label=None)
+    config: ConfigData = {}
 
-    if "model" in config:
-        config["model"] = _normalize_model(config["model"], "model")
+    if "model" in raw:
+        config["model"] = _normalize_model(raw["model"], "model")
 
-    if "models" in config:
-        config["models"] = _normalize_models(config["models"])
+    if "models" in raw:
+        config["models"] = _normalize_models(raw["models"])
 
-    if "output" in config:
-        config["output"] = _normalize_output(config["output"])
+    if "cache" in raw:
+        config["cache"] = _normalize_cache(raw["cache"])
 
-    if "cache" in config:
-        config["cache"] = _normalize_cache(config["cache"])
-
-    if "ui" in config:
-        config["ui"] = _normalize_ui(config["ui"])
-
-    if "vision" in config:
-        config["vision"] = _normalize_vision(config["vision"])
+    if "vision" in raw:
+        config["vision"] = _normalize_vision(raw["vision"])
 
     return config
 
@@ -87,6 +80,7 @@ def _normalize_vision(raw: Any) -> ConfigData:
     if not isinstance(raw, dict):
         raise ValueError("vision must be a string or object")
 
+    _reject_unsupported_keys(raw, {"model"}, label="vision")
     vision: ConfigData = {}
     if "model" in raw:
         vision = _normalize_model(raw["model"], "vision.model")
@@ -98,8 +92,6 @@ def _normalize_model(raw: Any, label: str) -> ConfigData:
         value = raw.strip()
         if not value:
             raise ValueError(f"{label} must not be empty")
-        if value == "auto":
-            return {"mode": "auto"}
         if "/" in value:
             return {"id": value}
         return {"name": value}
@@ -107,26 +99,18 @@ def _normalize_model(raw: Any, label: str) -> ConfigData:
     if not isinstance(raw, dict):
         raise ValueError(f"{label} must be a string or object")
 
-    model = dict(raw)
-    id_value = _optional_clean_string(model.get("id"), f"{label}.id")
-    name_value = _optional_clean_string(model.get("name"), f"{label}.name")
-    mode_value = _optional_clean_string(model.get("mode"), f"{label}.mode")
+    _reject_unsupported_keys(raw, {"id", "name"}, label=label)
+    id_value = _optional_clean_string(raw.get("id"), f"{label}.id")
+    name_value = _optional_clean_string(raw.get("name"), f"{label}.name")
 
     normalized: ConfigData = {}
     if id_value:
         normalized["id"] = id_value
     if name_value:
         normalized["name"] = name_value
-    if mode_value:
-        if mode_value != "auto":
-            raise ValueError(f'{label}.mode must be "auto"')
-        normalized["mode"] = mode_value
 
     if not normalized:
-        raise ValueError(f'{label} must include "id", "name", or mode "auto"')
-
-    if "rules" in model:
-        normalized["rules"] = model["rules"]
+        raise ValueError(f'{label} must include "id" or "name"')
 
     return normalized
 
@@ -140,63 +124,38 @@ def _normalize_models(raw: Any) -> ConfigData:
         if not isinstance(name, str) or not name.strip():
             raise ValueError("model names must be non-empty strings")
         normalized_name = name.strip()
-        if normalized_name == "auto":
-            raise ValueError('model name "auto" is reserved')
         models[normalized_name] = _normalize_model(value, f"models.{normalized_name}")
     return models
-
-
-def _normalize_output(raw: Any) -> ConfigData:
-    if not isinstance(raw, dict):
-        raise ValueError("output must be an object")
-
-    output: ConfigData = {}
-    language = _optional_clean_string(raw.get("language"), "output.language")
-    length = _optional_clean_string(raw.get("length"), "output.length")
-
-    if language:
-        output["language"] = language
-    if length:
-        parse_length_arg(length)
-        output["length"] = length
-
-    return output
 
 
 def _normalize_cache(raw: Any) -> ConfigData:
     if not isinstance(raw, dict):
         raise ValueError("cache must be an object")
 
+    _reject_unsupported_keys(raw, {"ttlDays"}, label="cache")
     cache: ConfigData = {}
-    if "enabled" in raw:
-        if not isinstance(raw["enabled"], bool):
-            raise ValueError("cache.enabled must be a boolean")
-        cache["enabled"] = raw["enabled"]
-
-    for key in ("maxMb", "ttlDays"):
-        if key not in raw:
-            continue
-        value = raw[key]
+    if "ttlDays" in raw:
+        value = raw["ttlDays"]
         if not isinstance(value, int | float) or isinstance(value, bool) or value <= 0:
-            raise ValueError(f"cache.{key} must be a positive number")
-        cache[key] = value
-
-    path = _optional_clean_string(raw.get("path"), "cache.path")
-    if path:
-        cache["path"] = path
+            raise ValueError("cache.ttlDays must be a positive number")
+        cache["ttlDays"] = value
 
     return cache
 
 
-def _normalize_ui(raw: Any) -> ConfigData:
-    if not isinstance(raw, dict):
-        raise ValueError("ui must be an object")
-
-    ui: ConfigData = {}
-    theme = _optional_clean_string(raw.get("theme"), "ui.theme")
-    if theme:
-        ui["theme"] = theme
-    return ui
+def _reject_unsupported_keys(
+    raw: Mapping[str, Any],
+    supported: set[str],
+    *,
+    label: str | None,
+) -> None:
+    unsupported = sorted(str(key) for key in raw if key not in supported)
+    if not unsupported:
+        return
+    prefix = f"{label}." if label else ""
+    names = ", ".join(f"{prefix}{key}" for key in unsupported)
+    allowed = ", ".join(sorted(supported))
+    raise ValueError(f"Unsupported config key: {names}. Supported here: {allowed}")
 
 
 def _optional_clean_string(raw: Any, label: str) -> str | None:

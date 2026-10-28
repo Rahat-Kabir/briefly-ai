@@ -20,8 +20,21 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 211 passed
+pytest: 222 passed
 ruff: All checks passed
+```
+
+## Dependency Floor Check
+
+Before a release, or after changing dependency floors, run the suite against
+the lowest allowed direct dependency versions in a throwaway venv:
+
+```powershell
+$venv = "$env:TEMP\briefly-venv-lowest"
+uv venv $venv --python 3.11
+uv pip install --python $venv\Scripts\python.exe --resolution lowest-direct . "pytest>=8.0"
+& $venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
+Remove-Item -Recurse -Force $venv
 ```
 
 ## Test Layout
@@ -69,7 +82,8 @@ tests/
   briefing routing.
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
   separation.
-- Groq Whisper YouTube fallback with mocked audio download and API response.
+- Groq Whisper YouTube fallback with mocked audio download and API response,
+  including oversized-audio errors and the 60s upload timeout override.
 - Local audio/video transcription with mocked Groq responses, including cache
   hit, mtime invalidation, skip-cache, missing key, and oversized file errors.
 - Local image extraction with a mocked vision LLM, including extension
@@ -94,6 +108,12 @@ tests/
 - URL and summary cache behavior, TTL, stats, and clear.
 - Summary cache separation by brief type.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
+- Clean CLI error for non-UTF-8 local files.
+- LiteLLM `timeout` and `num_retries` forwarded for briefing, streaming, and
+  vision calls, and LiteLLM debug banners suppressed.
+- Config rejection of unsupported keys (core and CLI).
+- Cache pruning of expired rows on write and SQLite connection closing.
+- Config vision model used in `--extract --skip-cache` mode.
 - Placeholder briefing behavior.
 - Flag parser behavior.
 - Core input resolution.

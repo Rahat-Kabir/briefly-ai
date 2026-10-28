@@ -2,6 +2,8 @@ from pathlib import Path
 import sqlite3
 import time
 
+import pytest
+
 from briefly_core.briefing import BriefingOptions, build_briefing_request
 from briefly_core.cache import (
     clear_cache,
@@ -116,6 +118,64 @@ def test_summary_cache_expires_after_ttl(tmp_path: Path) -> None:
     cached = get_summary_cache(request, cache_path=cache_path, ttl_days=32)
     assert cached is not None
     assert cached.text == "Cached brief."
+
+
+def test_url_cache_write_deletes_expired_rows(tmp_path: Path) -> None:
+    cache_path = tmp_path / "cache.sqlite"
+    old = ExtractedContent(source="https://old.example", title=None, text="Old text.")
+    new = ExtractedContent(source="https://new.example", title=None, text="New text.")
+    set_url_cache("https://old.example", old, cache_path=cache_path)
+    _age_cache_row(cache_path, "url_cache", days=8)
+
+    set_url_cache("https://new.example", new, cache_path=cache_path)
+
+    assert get_cache_stats(cache_path=cache_path).url_entries == 1
+    assert get_url_cache("https://new.example", cache_path=cache_path) == new
+
+
+def test_url_cache_write_respects_longer_ttl(tmp_path: Path) -> None:
+    cache_path = tmp_path / "cache.sqlite"
+    old = ExtractedContent(source="https://old.example", title=None, text="Old text.")
+    new = ExtractedContent(source="https://new.example", title=None, text="New text.")
+    set_url_cache("https://old.example", old, cache_path=cache_path)
+    _age_cache_row(cache_path, "url_cache", days=8)
+
+    set_url_cache("https://new.example", new, cache_path=cache_path, ttl_days=14)
+
+    assert get_cache_stats(cache_path=cache_path).url_entries == 2
+
+
+def test_summary_cache_write_deletes_expired_rows(tmp_path: Path) -> None:
+    cache_path = tmp_path / "cache.sqlite"
+    set_summary_cache(_request(model="old/model"), "Old brief.", cache_path=cache_path)
+    _age_cache_row(cache_path, "summary_cache", days=31)
+
+    set_summary_cache(_request(model="new/model"), "New brief.", cache_path=cache_path)
+
+    assert get_cache_stats(cache_path=cache_path).summary_entries == 1
+
+
+def test_cache_closes_connections(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    cache_path = tmp_path / "cache.sqlite"
+    opened: list[sqlite3.Connection] = []
+    real_connect = sqlite3.connect
+
+    def tracking_connect(path):
+        connection = real_connect(path)
+        opened.append(connection)
+        return connection
+
+    monkeypatch.setattr("briefly_core.cache.sqlite3.connect", tracking_connect)
+    extracted = ExtractedContent(source="https://example.com", title=None, text="Text.")
+    set_url_cache("https://example.com", extracted, cache_path=cache_path)
+    get_url_cache("https://example.com", cache_path=cache_path)
+    get_cache_stats(cache_path=cache_path)
+    clear_cache(cache_path=cache_path)
+
+    assert len(opened) == 4
+    for connection in opened:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            connection.execute("SELECT 1")
 
 
 def test_cache_stats_and_clear(tmp_path: Path) -> None:

@@ -273,3 +273,22 @@ def test_image_without_vision_model_errors(tmp_path: Path) -> None:
 
     assert result.exit_code != 0
     assert "vision-capable model" in result.stderr
+
+
+def test_image_extract_skip_cache_uses_config_vision_model(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    image = _write_image(tmp_path)
+    captured = _patch_extract(monkeypatch)
+
+    config_dir = tmp_path / ".briefly"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "config.json").write_text(
+        json.dumps({"vision": {"model": "gemini/gemini-2.5-flash-lite"}}),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, [str(image), "--extract", "--skip-cache"], color=False)
+
+    assert result.exit_code == 0, result.stderr
+    assert captured.models == ["gemini/gemini-2.5-flash-lite"]

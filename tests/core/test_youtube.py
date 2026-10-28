@@ -7,6 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from briefly_core.audio import LOCAL_MEDIA_UPLOAD_LIMIT_BYTES
 from briefly_core.youtube import (
     CaptionSegment,
     YoutubeTranscript,
@@ -431,6 +432,37 @@ def test_fetch_youtube_transcript_reports_groq_fallback_error(
     async def run() -> None:
         async with _make_client(handler) as client:
             with pytest.raises(ValueError, match="Groq Whisper fallback failed: yt-dlp failed"):
+                await fetch_youtube_transcript(
+                    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    client=client,
+                )
+
+    asyncio.run(run())
+
+
+def test_fetch_youtube_transcript_reports_oversized_fallback_audio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    async def fake_download_audio(url: str, output_dir: Path) -> Path:
+        audio_path = output_dir / "dQw4w9WgXcQ.mp3"
+        with audio_path.open("wb") as file:
+            file.truncate(LOCAL_MEDIA_UPLOAD_LIMIT_BYTES + 1)
+        return audio_path
+
+    monkeypatch.setattr("briefly_core.youtube._download_youtube_audio", fake_download_audio)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/watch":
+            return httpx.Response(200, text="")
+        if request.url.path == "/youtubei/v1/player":
+            return httpx.Response(200, json={})
+        raise AssertionError(f"Unexpected request: {request.url}")
+
+    async def run() -> None:
+        async with _make_client(handler) as client:
+            with pytest.raises(ValueError, match="too large for Groq upload"):
                 await fetch_youtube_transcript(
                     "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                     client=client,

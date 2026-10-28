@@ -63,12 +63,17 @@ def test_litellm_client_forwards_request(monkeypatch: pytest.MonkeyPatch) -> Non
     import litellm
 
     monkeypatch.setattr(litellm, "acompletion", fake_acompletion)
+    monkeypatch.setattr(litellm, "suppress_debug_info", False)
 
     result = asyncio.run(LiteLlmBriefingClient().generate(_request(max_output_tokens=123)))
+
+    assert litellm.suppress_debug_info is True
 
     assert result == BriefingResult(text="Real brief.", model="provider/model")
     assert calls[0]["model"] == "test/model"
     assert calls[0]["max_tokens"] == 123
+    assert calls[0]["timeout"] == 120.0
+    assert calls[0]["num_retries"] == 2
     assert calls[0]["messages"][0]["role"] == "user"
     assert "Brief this." in calls[0]["messages"][0]["content"]
 
@@ -145,6 +150,8 @@ def test_litellm_client_streams_chunks(monkeypatch: pytest.MonkeyPatch) -> None:
     assert chunks == ["Hello ", "world", "!"]
     assert calls[0]["stream"] is True
     assert calls[0]["max_tokens"] == 42
+    assert calls[0]["timeout"] == 120.0
+    assert calls[0]["num_retries"] == 2
     assert calls[0]["model"] == "test/model"
 
 

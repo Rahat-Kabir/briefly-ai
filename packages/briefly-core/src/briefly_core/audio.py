@@ -96,6 +96,14 @@ async def transcribe_file_with_groq(
     client: httpx.AsyncClient,
     model: str | None = None,
 ) -> TranscriptionResult:
+    size = path.stat().st_size
+    if size > LOCAL_MEDIA_UPLOAD_LIMIT_BYTES:
+        limit_mb = LOCAL_MEDIA_UPLOAD_LIMIT_BYTES // (1024 * 1024)
+        raise RuntimeError(
+            f"Audio is too large for Groq upload: {size / (1024 * 1024):.1f} MB "
+            f"(limit {limit_mb} MB). Audio chunking is not implemented yet."
+        )
+
     selected_model = model or groq_transcription_model()
     files = {
         "file": (
@@ -113,6 +121,7 @@ async def transcribe_file_with_groq(
             "temperature": "0",
         },
         files=files,
+        timeout=_DEFAULT_TIMEOUT_SECONDS,
     )
     if response.status_code == 429:
         raise RuntimeError("Groq transcription rate limit or quota was reached.")

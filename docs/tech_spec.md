@@ -105,7 +105,18 @@ Current behavior:
   chunks as plain text.
 - `--json` prints structured input, extracted text, prompt, model, cache, and
   summary fields. Streaming is disabled in JSON mode so stdout stays valid JSON.
-- Retries, provider presets, and cost reporting are deferred.
+- Briefing calls pass `timeout=120` seconds and `num_retries=2` to LiteLLM.
+  Vision extraction calls (images and scanned PDFs) pass `timeout=300` and
+  `num_retries=2`. Retries cover timeouts, rate limits, and provider 5xx
+  errors, so the worst-case wait is about three timeouts plus backoff.
+  These values are not configurable yet.
+- `litellm.suppress_debug_info` is set after each lazy import so LiteLLM's
+  "Give Feedback" / "Provider List" banners do not leak into CLI output.
+- Provider presets and cost reporting are deferred.
+
+Dependency floors match the lowest versions the test suite passes on:
+`litellm>=1.83,<2` (upper bound because LiteLLM changes often),
+`click>=8.3`, and `pdfplumber>=0.11.9`.
 
 ## Input Resolution
 
@@ -114,7 +125,8 @@ The root briefing command resolves input before any briefing work starts.
 Current supported input kinds:
 
 - `-` reads text from stdin.
-- Existing local files are read as UTF-8 text.
+- Existing local files are read as UTF-8 text. Non-UTF-8 files (for example
+  UTF-16 text or binary formats like `.docx`) fail with a clear CLI error.
 - Local audio/video files are transcribed when extraction or briefing needs
   text.
 - Local `.pdf` files are extracted with pdfplumber when extraction or briefing
@@ -127,6 +139,9 @@ input. URL extract mode fetches HTML, removes non-content elements, extracts
 main text with trafilatura first, falls back to BeautifulSoup, and prints title
 plus page text. `--output-format markdown` preserves Markdown-style headings
 and links where available.
+
+Config is always loaded, including in `--extract --skip-cache` mode, so
+`vision.model` still applies to image and scanned-PDF extraction.
 
 ## YouTube
 
@@ -162,6 +177,10 @@ to Groq Whisper:
 - `BRIEFLY_GROQ_WHISPER_MODEL` may override the Whisper model id.
 - Convert Groq segment timestamps into `CaptionSegment` values.
 - Fail clearly if the fallback is configured but `yt-dlp` or Groq fails.
+- The shared Groq upload helper enforces the 25 MB limit before reading the
+  file and sets its own 60s request timeout, so the 15s YouTube client
+  timeout does not apply to the upload. Longer videos fail with a clear
+  size error until audio chunking exists.
 
 Cache uses a separate `youtube_transcript` slot from regular URL extraction so
 future YouTube extractor changes do not collide with HTML article entries.
@@ -279,6 +298,9 @@ Current behavior:
 - URL entries expire after 7 days by default.
 - Summary entries expire after 30 days by default.
 - Config `cache.ttlDays` overrides both TTLs.
+- Each cache write deletes expired rows from that table using the active TTL,
+  so the SQLite file does not grow forever.
+- SQLite connections commit and close after every cache operation.
 - `briefly cache stats` shows path, entry counts, and size.
 - `briefly cache clear` removes cache rows and keeps the SQLite file.
 
@@ -303,23 +325,18 @@ The config loader currently supports:
 - Comment rejection.
 - Top-level object validation.
 - Model shorthand normalization.
-- Basic `models`, `output`, `cache`, and `ui` sections.
+- Top-level `model`, `models`, `vision`, and `cache` sections only.
+- Model objects accept only `id` and `name`; `vision` objects accept only
+  `model`; `cache` accepts only `ttlDays`.
+- Any other key fails fast with `Unsupported config key: <path>` and the list
+  of supported keys, so typos and not-yet-built options are never silently
+  ignored.
 - CLI model resolution from top-level `model` and named `models` presets.
 - `cache.ttlDays` for cache freshness.
 - `briefly config init --model <id>` creates the config file and refuses
   overwrite unless `--force` is passed.
 
 Model normalization:
-
-```json
-"auto"
-```
-
-becomes:
-
-```json
-{ "mode": "auto" }
-```
 
 ```json
 "openai/gpt-5-mini"

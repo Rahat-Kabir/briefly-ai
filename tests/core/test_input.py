@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from briefly_core.input import ResolvedInput, resolve_input_target
 
 
@@ -69,3 +71,11 @@ def test_resolves_video_file_without_reading(tmp_path: Path) -> None:
         source=str(video_path),
         text=None,
     )
+
+
+def test_non_utf8_file_raises_clear_error(tmp_path: Path) -> None:
+    source = tmp_path / "notes.txt"
+    source.write_text("hello", encoding="utf-16")
+
+    with pytest.raises(ValueError, match="File is not UTF-8 text"):
+        resolve_input_target(str(source))

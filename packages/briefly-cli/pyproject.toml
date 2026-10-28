@@ -5,7 +5,7 @@ description = "Command line interface for Briefly."
 requires-python = ">=3.11"
 dependencies = [
   "briefly-core",
-  "click>=8.0",
+  "click>=8.3",
 ]
 
 [project.scripts]

@@ -97,13 +97,12 @@ def brief(
     except ValueError as error:
         raise click.BadParameter(str(error)) from error
 
-    resolved_input = resolve_input_target(
-        input,
-        stdin_reader=lambda: click.get_text_stream("stdin").read(),
-    )
-
     try:
-        config = load_config().config if not extract_only or not skip_cache else None
+        resolved_input = resolve_input_target(
+            input,
+            stdin_reader=lambda: click.get_text_stream("stdin").read(),
+        )
+        config = load_config().config
     except Exception as error:
         raise click.ClickException(str(error)) from error
 
@@ -175,7 +174,7 @@ def brief(
             click.echo(hint, err=True)
 
     if not skip_cache:
-        cached_summary = _get_summary_cache(briefing_request, _cache_ttl_days(config))
+        cached_summary = get_summary_cache(briefing_request, ttl_days=_cache_ttl_days(config))
         if cached_summary is not None:
             if json_output:
                 _echo_json(
@@ -197,7 +196,7 @@ def brief(
         try:
             streamed_text = asyncio.run(_run_stream(briefing_request))
             if not skip_cache:
-                set_summary_cache(briefing_request, streamed_text)
+                set_summary_cache(briefing_request, streamed_text, ttl_days=_cache_ttl_days(config))
         except Exception as error:
             raise click.ClickException(str(error)) from error
         return
@@ -208,7 +207,11 @@ def brief(
         raise click.ClickException(str(error)) from error
 
     if not skip_cache:
-        set_summary_cache(briefing_request, briefing_result.text)
+        set_summary_cache(
+            briefing_request,
+            briefing_result.text,
+            ttl_days=_cache_ttl_days(config),
+        )
 
     if json_output:
         _echo_json(
@@ -244,33 +247,6 @@ def _cache_ttl_days(config: ConfigData | None) -> float | None:
     if isinstance(ttl_days, int | float) and not isinstance(ttl_days, bool):
         return float(ttl_days)
     return None
-
-
-def _get_summary_cache(request, cache_ttl_days: float | None):
-    if cache_ttl_days is None:
-        return get_summary_cache(request)
-    return get_summary_cache(request, ttl_days=cache_ttl_days)
-
-
-def _get_url_cache(
-    requested_url: str,
-    output_format: str,
-    cache_ttl_days: float | None,
-    *,
-    cache_kind: str = "url_extract",
-):
-    if cache_ttl_days is None:
-        return get_url_cache(
-            requested_url,
-            output_format=output_format,
-            cache_kind=cache_kind,
-        )
-    return get_url_cache(
-        requested_url,
-        output_format=output_format,
-        ttl_days=cache_ttl_days,
-        cache_kind=cache_kind,
-    )
 
 
 def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
@@ -347,13 +323,22 @@ async def _resolve_extractable_input(
             )
 
         if not skip_cache:
-            cached_url = _get_url_cache(resolved_input.source, output_format, cache_ttl_days)
+            cached_url = get_url_cache(
+                resolved_input.source,
+                output_format=output_format,
+                ttl_days=cache_ttl_days,
+            )
             if cached_url is not None:
                 return _resolved_url_input(cached_url)
 
         extracted = await extract_url(resolved_input.source, output_format=output_format)
         if not skip_cache:
-            set_url_cache(resolved_input.source, extracted, output_format=output_format)
+            set_url_cache(
+                resolved_input.source,
+                extracted,
+                output_format=output_format,
+                ttl_days=cache_ttl_days,
+            )
         return _resolved_url_input(extracted)
 
     if resolved_input.kind == "pdf":
@@ -393,10 +378,10 @@ async def _resolve_pdf_input(
 ) -> ResolvedInput:
     cache_format = _pdf_cache_format(path, vision_model)
     if not skip_cache:
-        cached = _get_url_cache(
+        cached = get_url_cache(
             str(path),
-            cache_format,
-            cache_ttl_days,
+            output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_PDF_CACHE_KIND,
         )
         if cached is not None:
@@ -418,6 +403,7 @@ async def _resolve_pdf_input(
             str(path),
             extracted,
             output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_PDF_CACHE_KIND,
         )
     return _resolved_pdf_input(extracted)
@@ -445,10 +431,10 @@ async def _resolve_media_input(
     path = Path(resolved_input.source)
     cache_format = _media_cache_format(path)
     if not skip_cache:
-        cached = _get_url_cache(
+        cached = get_url_cache(
             str(path),
-            cache_format,
-            cache_ttl_days,
+            output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_MEDIA_CACHE_KIND,
         )
         if cached is not None:
@@ -461,6 +447,7 @@ async def _resolve_media_input(
             str(path),
             extracted,
             output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_MEDIA_CACHE_KIND,
         )
     return _resolved_media_input(extracted, kind=resolved_input.kind)
@@ -491,10 +478,10 @@ async def _resolve_image_input(
 
     cache_format = _image_cache_format(path, vision_model)
     if not skip_cache:
-        cached = _get_url_cache(
+        cached = get_url_cache(
             str(path),
-            cache_format,
-            cache_ttl_days,
+            output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_IMAGE_CACHE_KIND,
         )
         if cached is not None:
@@ -507,6 +494,7 @@ async def _resolve_image_input(
             str(path),
             extracted,
             output_format=cache_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_IMAGE_CACHE_KIND,
         )
     return ResolvedInput(kind="image", source=str(path), text=text)
@@ -545,10 +533,10 @@ async def _resolve_youtube_input(
 ) -> ResolvedInput:
     output_format = _youtube_cache_format(timestamps)
     if not skip_cache:
-        cached = _get_url_cache(
+        cached = get_url_cache(
             url,
-            output_format,
-            cache_ttl_days,
+            output_format=output_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_YOUTUBE_CACHE_KIND,
         )
         if cached is not None:
@@ -565,6 +553,7 @@ async def _resolve_youtube_input(
             url,
             extracted,
             output_format=output_format,
+            ttl_days=cache_ttl_days,
             cache_kind=_YOUTUBE_CACHE_KIND,
         )
     return _resolved_url_input(extracted)

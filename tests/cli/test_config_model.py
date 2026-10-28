@@ -98,3 +98,14 @@ def test_unknown_model_preset_reports_error(monkeypatch, tmp_path: Path) -> None
 
     assert result.exit_code != 0
     assert "Unknown model preset: missing" in result.stderr
+
+
+def test_unsupported_config_key_fails_clearly(monkeypatch, tmp_path: Path) -> None:
+    config_path = _write_config(tmp_path, {"model": "test/default", "cache": {"maxMb": 256}})
+    monkeypatch.setenv("BRIEFLY_CONFIG", str(config_path))
+
+    result = runner.invoke(app, ["Source text.", "--extract"], color=False)
+
+    assert result.exit_code == 1
+    assert "Unsupported config key: cache.maxMb" in result.stderr
+    assert "Traceback" not in result.stderr

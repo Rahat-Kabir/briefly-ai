@@ -87,3 +87,15 @@ def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.exit_code != 0
     assert "URL did not return HTML content: application/json" in result.stderr
+
+
+def test_non_utf8_file_shows_clean_error() -> None:
+    with runner.isolated_filesystem():
+        with open("notes.txt", "w", encoding="utf-16") as file:
+            file.write("Briefly reads files.")
+
+        result = runner.invoke(app, ["notes.txt", "--extract"], color=False)
+
+    assert result.exit_code == 1
+    assert "File is not UTF-8 text" in result.stderr
+    assert "Traceback" not in result.stderr

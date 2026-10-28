@@ -5,6 +5,9 @@ from typing import Any, AsyncIterator, Protocol
 
 from briefly_core.briefing import BriefingRequest
 
+_DEFAULT_TIMEOUT_SECONDS = 120.0
+_DEFAULT_NUM_RETRIES = 2
+
 
 @dataclass(frozen=True)
 class BriefingResult:
@@ -24,6 +27,7 @@ class LiteLlmBriefingClient:
 
         import litellm
 
+        litellm.suppress_debug_info = True
         response = await litellm.acompletion(**_completion_kwargs(request, model))
         text = _response_text(response)
         if not text.strip():
@@ -37,6 +41,7 @@ class LiteLlmBriefingClient:
 
         import litellm
 
+        litellm.suppress_debug_info = True
         kwargs = _completion_kwargs(request, model)
         kwargs["stream"] = True
 
@@ -80,6 +85,8 @@ def _completion_kwargs(request: BriefingRequest, model: str) -> dict[str, Any]:
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": [{"role": "user", "content": request.prompt}],
+        "timeout": _DEFAULT_TIMEOUT_SECONDS,
+        "num_retries": _DEFAULT_NUM_RETRIES,
     }
     if request.options.max_output_tokens is not None:
         kwargs["max_tokens"] = request.options.max_output_tokens

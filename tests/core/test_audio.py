@@ -109,3 +109,38 @@ def test_transcribe_file_with_groq_reports_rate_limit(tmp_path: Path) -> None:
                 await transcribe_file_with_groq(path, api_key="test-key", client=client)
 
     asyncio.run(run())
+
+
+def test_transcribe_file_with_groq_rejects_oversized_file_before_upload(tmp_path: Path) -> None:
+    path = tmp_path / "large.mp3"
+    with path.open("wb") as file:
+        file.truncate(LOCAL_MEDIA_UPLOAD_LIMIT_BYTES + 1)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("Oversized audio must not be uploaded.")
+
+    async def run() -> None:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            with pytest.raises(RuntimeError, match="too large for Groq upload"):
+                await transcribe_file_with_groq(path, api_key="test-key", client=client)
+
+    asyncio.run(run())
+
+
+def test_transcribe_file_with_groq_overrides_short_client_timeout(tmp_path: Path) -> None:
+    path = tmp_path / "meeting.mp3"
+    path.write_bytes(b"audio-bytes")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.extensions["timeout"]["read"] == 60.0
+        return httpx.Response(200, json={"text": "Groq transcript."})
+
+    async def run() -> None:
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            timeout=15.0,
+        ) as client:
+            result = await transcribe_file_with_groq(path, api_key="test-key", client=client)
+        assert result.text == "Groq transcript."
+
+    asyncio.run(run())

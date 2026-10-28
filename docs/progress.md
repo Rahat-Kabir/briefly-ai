@@ -65,6 +65,29 @@ Completed:
   MIME, fallback triggers on scanned PDFs, text PDFs skip the fallback,
   missing-vision-model error, and cache invalidation on vision-model change.
 
+- Fixed `--extract --skip-cache` skipping config load, which made image and
+  scanned-PDF extraction ignore `vision.model`. Config now always loads.
+- Non-UTF-8 local files now fail with a clear CLI error instead of a
+  `UnicodeDecodeError` traceback; input resolution runs inside the CLI
+  error handler.
+- Fixed the YouTube Groq Whisper fallback: the upload now uses its own 60s
+  timeout instead of the 15s YouTube client timeout, and audio over 25 MB
+  fails with a clear size error before upload instead of a vague HTTP 413.
+- Added LiteLLM `timeout` and `num_retries=2` to briefing (120s) and vision
+  (300s) calls so the CLI no longer waits on LiteLLM's long default timeout.
+- Raised dependency floors to tested versions: `litellm>=1.83,<2`,
+  `click>=8.3`, `pdfplumber>=0.11.9`. The suite passes on a lowest-direct
+  install.
+- Suppressed LiteLLM's debug banners so errors no longer print "Give Feedback"
+  and "Provider List" lines into CLI output.
+- Config now fails fast on unsupported keys. Removed the `output`, `ui`,
+  `model: "auto"`, model `mode`/`rules`, and `cache.enabled`/`maxMb`/`path`
+  options, which were accepted but did nothing. Supported keys are `model`,
+  `models`, `vision`, and `cache.ttlDays`.
+- Cache writes now delete expired rows, and SQLite connections are closed
+  after each operation. `ttl_days=None` in the cache API now means the table
+  default.
+
 Possible before release:
 
 - Save generated briefs to Markdown files.
