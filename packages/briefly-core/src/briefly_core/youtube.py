@@ -368,6 +368,11 @@ async def _download_youtube_audio(url: str, output_dir: Path) -> Path:
             "-x",
             "--audio-format",
             "mp3",
+            # Whisper downsamples to 16 kHz mono anyway; this keeps ~1h45m under Groq's 25 MB.
+            "--audio-quality",
+            "32K",
+            "--postprocessor-args",
+            "ExtractAudio:-ac 1 -ar 16000",
             "-o",
             output_template,
             url,

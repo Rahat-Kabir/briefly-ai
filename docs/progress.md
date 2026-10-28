@@ -87,6 +87,9 @@ Completed:
 - Cache writes now delete expired rows, and SQLite connections are closed
   after each operation. `ttl_days=None` in the cache API now means the table
   default.
+- YouTube Whisper fallback now downloads 32 kbps mono 16 kHz MP3, the format
+  Whisper uses internally, so videos up to about 1h45m fit Groq's 25 MB limit
+  instead of about 26 minutes.
 
 Possible before release:
 

@@ -20,7 +20,7 @@ from briefly_core.youtube import (
     pick_caption_track,
     transcript_to_text,
 )
-from briefly_core.youtube import _normalize_caption_url
+from briefly_core.youtube import _download_youtube_audio, _normalize_caption_url
 
 
 def test_is_youtube_url_accepts_known_hosts() -> None:
@@ -469,6 +469,36 @@ def test_fetch_youtube_transcript_reports_oversized_fallback_audio(
                 )
 
     asyncio.run(run())
+
+
+def test_download_youtube_audio_requests_low_bitrate_mono_speech_audio(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: list[tuple[str, ...]] = []
+
+    class FakeProcess:
+        returncode = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return b"", b""
+
+    async def fake_exec(*args: str, **kwargs: object) -> FakeProcess:
+        captured.append(args)
+        (tmp_path / "dQw4w9WgXcQ.mp3").write_bytes(b"audio")
+        return FakeProcess()
+
+    monkeypatch.delenv("YT_DLP_PATH", raising=False)
+    monkeypatch.setattr("briefly_core.youtube.asyncio.create_subprocess_exec", fake_exec)
+
+    audio_path = asyncio.run(
+        _download_youtube_audio("https://www.youtube.com/watch?v=dQw4w9WgXcQ", tmp_path)
+    )
+
+    assert audio_path == tmp_path / "dQw4w9WgXcQ.mp3"
+    args = captured[0]
+    assert args[args.index("--audio-quality") + 1] == "32K"
+    assert args[args.index("--postprocessor-args") + 1] == "ExtractAudio:-ac 1 -ar 16000"
 
 
 def test_fetch_youtube_transcript_rejects_invalid_url() -> None:

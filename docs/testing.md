@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 222 passed
+pytest: 223 passed
 ruff: All checks passed
 ```
 
@@ -84,6 +84,7 @@ tests/
   separation.
 - Groq Whisper YouTube fallback with mocked audio download and API response,
   including oversized-audio errors and the 60s upload timeout override.
+- yt-dlp audio download arguments (32 kbps mono 16 kHz) via a fake subprocess.
 - Local audio/video transcription with mocked Groq responses, including cache
   hit, mtime invalidation, skip-cache, missing key, and oversized file errors.
 - Local image extraction with a mocked vision LLM, including extension

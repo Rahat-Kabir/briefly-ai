@@ -172,6 +172,10 @@ If no caption track is available and `GROQ_API_KEY` is set, Briefly falls back
 to Groq Whisper:
 
 - Download audio with `yt-dlp`; `YT_DLP_PATH` may point to a custom binary.
+- Ask yt-dlp for 32 kbps mono 16 kHz MP3 (`--audio-quality 32K`,
+  `--postprocessor-args "ExtractAudio:-ac 1 -ar 16000"`). Whisper resamples
+  to 16 kHz mono anyway, so nothing useful is lost, and about 1h45m of audio
+  fits in 25 MB (about 13.7 MB per hour).
 - POST the audio to Groq's OpenAI-compatible transcription endpoint.
 - Use `whisper-large-v3-turbo` by default.
 - `BRIEFLY_GROQ_WHISPER_MODEL` may override the Whisper model id.
@@ -179,8 +183,8 @@ to Groq Whisper:
 - Fail clearly if the fallback is configured but `yt-dlp` or Groq fails.
 - The shared Groq upload helper enforces the 25 MB limit before reading the
   file and sets its own 60s request timeout, so the 15s YouTube client
-  timeout does not apply to the upload. Longer videos fail with a clear
-  size error until audio chunking exists.
+  timeout does not apply to the upload. Videos over about 1h45m fail with a
+  clear size error until audio chunking exists.
 
 Cache uses a separate `youtube_transcript` slot from regular URL extraction so
 future YouTube extractor changes do not collide with HTML article entries.
