@@ -160,3 +160,10 @@ def test_usage_errors_show_root_command_name() -> None:
     assert "Usage: briefly [OPTIONS] [INPUT]" in result.stderr
     assert "Try 'briefly --help' for help." in result.stderr
     assert "briefly brief" not in result.stderr
+
+
+def test_explicit_brief_command_still_works() -> None:
+    result = runner.invoke(app, ["brief", "Briefly reads text.", "--extract"], color=False)
+
+    assert result.exit_code == 0
+    assert result.stdout == "Briefly reads text.\n"

@@ -139,9 +139,12 @@ Current supported input kinds:
 - A missing path fails with "File not found" instead of being briefed as
   text. A value counts as a path when it is one line, ends with a file
   extension (a dot, then 1-5 letters or digits starting with a letter), and
-  has no spaces or contains `/` or `\`. So `nope.txt`, `docs/notes.md`, and
-  `example.com` fail, while `Read the docs at notes.md` stays text. The error
-  suggests piping the value through stdin to brief it as text.
+  either has no spaces or starts like a path (`C:\`, `/`, `./`, `../`, `~`).
+  So `nope.txt`, `docs/notes.md`, `example.com`, and
+  `C:\Users\me\my notes.txt` fail, while `Read the docs at notes.md` and
+  `Compare TCP/IP and example.com` stay text. A relative path with spaces
+  (`notes/my meeting.md`) is not detected. The error suggests piping the value
+  through stdin to brief it as text.
 - An existing folder fails with "Input is a folder, not a file" instead of
   being briefed as text.
 - Any other value is treated as literal text.

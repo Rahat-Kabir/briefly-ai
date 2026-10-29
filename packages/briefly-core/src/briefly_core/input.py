@@ -13,6 +13,7 @@ from briefly_core.image import is_supported_image_path
 InputKind = Literal["text", "file", "stdin", "url", "pdf", "audio", "video", "image"]
 
 _FILE_EXTENSION_PATTERN = re.compile(r"\.[A-Za-z][A-Za-z0-9]{0,4}$")
+_PATH_START_PATTERN = re.compile(r"^(?:[A-Za-z]:[\\/]|[\\/]|\.{1,2}[\\/]|~)")
 
 
 @dataclass(frozen=True)
@@ -49,13 +50,13 @@ def resolve_input_target(
 
     if path.is_dir():
         raise ValueError(
-            f"Input is a folder, not a file: {raw_input}. Pass a file inside it, or "
+            f'Input is a folder, not a file: "{raw_input}". Pass a file inside it, or '
             f'to brief it as literal text, pipe it: echo "{raw_input}" | briefly -'
         )
 
     if _looks_like_file_path(raw_input):
         raise ValueError(
-            f"File not found: {raw_input}. "
+            f'File not found: "{raw_input}". '
             f'To brief it as literal text, pipe it: echo "{raw_input}" | briefly -'
         )
 
@@ -63,12 +64,13 @@ def resolve_input_target(
 
 
 def _looks_like_file_path(raw_input: str) -> bool:
-    # A sentence that mentions a file ("Read notes.md") has spaces but no path
-    # separator, so it stays text.
+    # With spaces, only input that starts like a path ("C:\Users\me\my notes.txt")
+    # counts, so sentences such as "Compare TCP/IP and example.com" stay text.
     if "\n" in raw_input or not _FILE_EXTENSION_PATTERN.search(raw_input):
         return False
-    has_separator = "/" in raw_input or "\\" in raw_input
-    return has_separator or " " not in raw_input
+    if " " not in raw_input:
+        return True
+    return _PATH_START_PATTERN.match(raw_input) is not None
 
 
 def _read_text_file(path: Path) -> str:

@@ -199,11 +199,11 @@ def test_extract_url_sends_briefly_user_agent(monkeypatch: pytest.MonkeyPatch) -
             text="<main><p>Hello from the page.</p></main>",
         )
 
-    real_async_client = httpx.AsyncClient
+    real_async_client_class = httpx.AsyncClient
     monkeypatch.setattr(
         httpx,
         "AsyncClient",
-        lambda **kwargs: real_async_client(transport=httpx.MockTransport(handler), **kwargs),
+        lambda **kwargs: real_async_client_class(transport=httpx.MockTransport(handler), **kwargs),
     )
 
     asyncio.run(extract_url("https://example.com"))

@@ -299,7 +299,7 @@ $env:UV_CACHE_DIR='.uv-cache'; uv run ruff check
 Expected current baseline:
 
 ```text
-pytest: 242 passed
+pytest: 247 passed
 ruff: All checks passed
 ```
 

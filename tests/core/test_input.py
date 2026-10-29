@@ -98,11 +98,17 @@ def test_file_with_bom_is_decoded(tmp_path: Path, raw: bytes) -> None:
         "nope.txt",
         "notes/meeting.md",
         r"C:\Users\me\my notes.txt",
+        "/home/me/my notes.txt",
+        "~/my notes.txt",
         "report.pdf",
         "example.com",
     ],
 )
-def test_missing_file_path_raises_clear_error(raw: str) -> None:
+def test_missing_file_path_raises_clear_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raw: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
     with pytest.raises(ValueError, match="File not found"):
         resolve_input_target(raw)
 
@@ -119,9 +125,15 @@ def test_folder_path_raises_clear_error(tmp_path: Path) -> None:
         "I love Python.",
         "v1.2",
         "First line\nsee notes.md",
+        "Summarize the pros/cons of Node.js",
+        "Compare TCP/IP and example.com",
     ],
 )
-def test_text_that_mentions_a_file_stays_text(raw: str) -> None:
+def test_text_that_mentions_a_file_stays_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raw: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
     assert resolve_input_target(raw).kind == "text"
 
 

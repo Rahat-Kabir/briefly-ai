@@ -97,7 +97,8 @@ def test_missing_file_shows_clean_error() -> None:
 
     assert result.exit_code == 1
     assert result.stdout == ""
-    assert "Error: File not found: nope.txt" in result.stderr
+    assert 'Error: File not found: "nope.txt".' in result.stderr
+    assert 'pipe it: echo "nope.txt" | briefly -' in result.stderr
 
 
 def test_folder_path_shows_clean_error() -> None:
@@ -107,7 +108,8 @@ def test_folder_path_shows_clean_error() -> None:
 
     assert result.exit_code == 1
     assert result.stdout == ""
-    assert "Error: Input is a folder, not a file: notes" in result.stderr
+    assert 'Error: Input is a folder, not a file: "notes".' in result.stderr
+    assert 'pipe it: echo "notes" | briefly -' in result.stderr
 
 
 def test_non_utf8_file_shows_clean_error() -> None:
