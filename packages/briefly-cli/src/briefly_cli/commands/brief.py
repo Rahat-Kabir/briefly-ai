@@ -19,6 +19,7 @@ from briefly_core.content import ExtractedContent, extract_url
 from briefly_core.image import extract_text_from_image
 from briefly_core.pdf import extract_pdf, extract_pdf_via_vision, has_extractable_pdf_text
 from briefly_core.flags import (
+    ExtractFormat,
     StreamMode,
     parse_brief_type,
     parse_extract_format,
@@ -27,7 +28,7 @@ from briefly_core.flags import (
     parse_max_output_tokens,
     parse_stream_mode,
 )
-from briefly_core.input import ResolvedInput, resolve_input_target
+from briefly_core.input import InputKind, ResolvedInput, resolve_input_target
 from briefly_core.llm import generate_brief, generate_brief_stream
 from briefly_core.youtube import (
     fetch_youtube_transcript,
@@ -42,7 +43,21 @@ _MEDIA_CACHE_KIND = "media_transcript"
 _IMAGE_CACHE_KIND = "image_extract"
 
 
-@click.command(hidden=True)
+class _BriefContext(click.Context):
+    """Show `briefly` in usage and errors, since users never type the hidden `brief`."""
+
+    @property
+    def command_path(self) -> str:
+        if self.parent is None:
+            return super().command_path
+        return self.parent.command_path
+
+
+class _BriefCommand(click.Command):
+    context_class = _BriefContext
+
+
+@click.command(cls=_BriefCommand, hidden=True)
 @click.argument("input", required=False)
 @click.option("--extract-only", "--extract", is_flag=True, help="Extract content without briefing.")
 @click.option("--output-format", "--format", default="text", help="Output format: text or markdown.")
@@ -268,12 +283,12 @@ def _resolve_model(model: str | None, config: ConfigData | None) -> str | None:
 
 def _resolve_named_model(name: str, config: ConfigData | None) -> str:
     models = config.get("models") if config else None
-    if not isinstance(models, dict) or name not in models:
+    if config is None or not isinstance(models, dict) or name not in models:
         raise ValueError(f"Unknown model preset: {name}")
     return _resolve_config_model(models[name], config)
 
 
-def _resolve_config_model(model: object, config: ConfigData) -> str | None:
+def _resolve_config_model(model: object, config: ConfigData) -> str:
     if not isinstance(model, dict):
         raise ValueError("Configured model must be an object.")
 
@@ -285,7 +300,7 @@ def _resolve_config_model(model: object, config: ConfigData) -> str | None:
     if isinstance(model_name, str):
         return _resolve_named_model(model_name, config)
 
-    return None
+    raise ValueError('Configured model must include "id" or "name".')
 
 
 async def _run_stream(request) -> str:
@@ -307,7 +322,7 @@ async def _run_stream(request) -> str:
 async def _resolve_extractable_input(
     resolved_input: ResolvedInput,
     *,
-    output_format: str = "text",
+    output_format: ExtractFormat = "text",
     skip_cache: bool = False,
     cache_ttl_days: float | None = None,
     timestamps: bool = False,
@@ -458,7 +473,7 @@ def _media_cache_format(path: Path) -> str:
     return f"text:{stat.st_mtime_ns}:{stat.st_size}:{groq_transcription_model()}"
 
 
-def _resolved_media_input(extracted: ExtractedContent, *, kind: str) -> ResolvedInput:
+def _resolved_media_input(extracted: ExtractedContent, *, kind: InputKind) -> ResolvedInput:
     return ResolvedInput(kind=kind, source=extracted.source, text=extracted.text)
 
 

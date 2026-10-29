@@ -73,13 +73,14 @@ tests/
 ## What Is Covered
 
 - CLI help and version output.
-- Root input command routing.
+- Root input command routing, and usage errors that say `briefly` instead of
+  the hidden `briefly brief`.
 - Briefing request construction.
 - Brief type, length preset, and output-format prompt behavior.
 - Short-input hint behavior, including stderr output and suppression in
   `--extract`, `--json`, and long-form length paths.
-- URL HTML extraction, Markdown mode, trafilatura fallback behavior, and URL
-  briefing routing.
+- URL HTML extraction, Markdown mode, trafilatura fallback behavior, the
+  Briefly user agent on URL fetches, and URL briefing routing.
 - YouTube captions, transcript formatting, timestamps, JSON output, and cache
   separation.
 - Groq Whisper YouTube fallback with mocked audio download and API response,
@@ -115,6 +116,8 @@ tests/
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
 - UTF-16 LE/BE and UTF-8 BOM text files, and a clean CLI error for other
   non-UTF-8 local files.
+- "File not found" for inputs that look like missing paths, while sentences
+  that mention a file stay literal text, and a clear error for folder paths.
 - LiteLLM `timeout` and `num_retries` forwarded for briefing, streaming, and
   vision calls, and LiteLLM debug banners suppressed.
 - Config rejection of unsupported keys (core and CLI).

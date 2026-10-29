@@ -101,6 +101,15 @@ Completed:
   the `briefly_core` exports (`--youtube`, `--firecrawl`, `--markdown-mode`,
   `--preprocess`, `--metrics`, `--video-mode`, `--timeout`, `--retries`). No
   CLI option ever used them.
+- URL fetches now send a descriptive `briefly-ai (+github URL)` user agent.
+  Wikipedia returned 403 to httpx's default and to a browser user agent.
+- Inputs that look like a missing file path (`nope.txt`, `docs/a.md`,
+  `example.com`) now fail with "File not found" instead of being briefed as
+  literal text, which spent a paid model call on a typo. Sentences that
+  mention a file stay text.
+- Folder paths now fail with "Input is a folder, not a file" instead of being
+  briefed as literal text.
+- Usage errors now say `briefly` instead of the hidden `briefly brief`.
 
 Possible before release:
 

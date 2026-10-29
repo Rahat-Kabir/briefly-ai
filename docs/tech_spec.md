@@ -29,7 +29,9 @@ briefly [input]
 ```
 
 The root input is internally routed to a hidden `brief` command. Users should
-not need to type `briefly brief`.
+not need to type `briefly brief`. The `brief` command's Click context reports
+its parent's command path, so usage lines and "Try … --help" hints say
+`briefly`, not `briefly brief`.
 
 Current visible commands:
 
@@ -134,10 +136,22 @@ Current supported input kinds:
 - Local `.pdf` files are extracted with pdfplumber when extraction or briefing
   needs text.
 - `http` and `https` URLs are fetched when extraction or briefing needs text.
+- A missing path fails with "File not found" instead of being briefed as
+  text. A value counts as a path when it is one line, ends with a file
+  extension (a dot, then 1-5 letters or digits starting with a letter), and
+  has no spaces or contains `/` or `\`. So `nope.txt`, `docs/notes.md`, and
+  `example.com` fail, while `Read the docs at notes.md` stays text. The error
+  suggests piping the value through stdin to brief it as text.
+- An existing folder fails with "Input is a folder, not a file" instead of
+  being briefed as text.
 - Any other value is treated as literal text.
 
 `--extract-only` / `--extract` prints resolved text for literal, file, and stdin
-input. URL extract mode fetches HTML, removes non-content elements, extracts
+input. URL fetches send the user agent
+`briefly-ai (+https://github.com/Rahat-Kabir/briefly-ai)`; Wikipedia rejects
+httpx's default and generic browser user agents.
+
+URL extract mode fetches HTML, removes non-content elements, extracts
 main text with trafilatura first, falls back to BeautifulSoup, and prints title
 plus page text. `--output-format markdown` preserves Markdown-style headings
 and links where available.

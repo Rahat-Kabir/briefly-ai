@@ -1,3 +1,5 @@
+import os
+
 from click.testing import CliRunner
 import pytest
 
@@ -87,6 +89,25 @@ def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.exit_code != 0
     assert "URL did not return HTML content: application/json" in result.stderr
+
+
+def test_missing_file_shows_clean_error() -> None:
+    with runner.isolated_filesystem():
+        result = runner.invoke(app, ["nope.txt", "--extract"], color=False)
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "Error: File not found: nope.txt" in result.stderr
+
+
+def test_folder_path_shows_clean_error() -> None:
+    with runner.isolated_filesystem():
+        os.mkdir("notes")
+        result = runner.invoke(app, ["notes", "--extract"], color=False)
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "Error: Input is a folder, not a file: notes" in result.stderr
 
 
 def test_non_utf8_file_shows_clean_error() -> None:

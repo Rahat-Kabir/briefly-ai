@@ -151,3 +151,12 @@ def test_root_validates_flags() -> None:
     result = runner.invoke(app, ["https://example.com", "--brief-type", "technical"], color=False)
     assert result.exit_code != 0
     assert "Unsupported --brief-type" in result.stderr
+
+
+def test_usage_errors_show_root_command_name() -> None:
+    result = runner.invoke(app, ["Briefly reads text.", "--length", "banana"], color=False)
+
+    assert result.exit_code == 2
+    assert "Usage: briefly [OPTIONS] [INPUT]" in result.stderr
+    assert "Try 'briefly --help' for help." in result.stderr
+    assert "briefly brief" not in result.stderr

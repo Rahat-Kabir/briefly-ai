@@ -300,6 +300,11 @@ echo "Piped text" | uv run briefly - --extract
 URL extraction uses trafilatura first, with BeautifulSoup fallback. Use
 `--output-format markdown` to preserve Markdown-style headings and links.
 
+A file path that doesn't exist, such as a typo like `notse.txt`, fails with
+"File not found" instead of being briefed as text, and a folder path fails with
+"Input is a folder, not a file". To brief a value like that as literal text,
+pipe it: `echo "notes.txt" | uv run briefly -`.
+
 ### Brief types
 
 `--brief-type` changes the purpose of the brief while `--length` still controls

@@ -188,6 +188,29 @@ def test_extract_url_uses_fetcher_and_returns_content() -> None:
     assert result.text == "Hello from the page."
 
 
+def test_extract_url_sends_briefly_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen_user_agents: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_user_agents.append(request.headers["user-agent"])
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/html; charset=utf-8"},
+            text="<main><p>Hello from the page.</p></main>",
+        )
+
+    real_async_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda **kwargs: real_async_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+
+    asyncio.run(extract_url("https://example.com"))
+
+    assert seen_user_agents == ["briefly-ai (+https://github.com/Rahat-Kabir/briefly-ai)"]
+
+
 def test_extract_url_rejects_non_html_content() -> None:
     async def fetcher(url: str) -> httpx.Response:
         request = httpx.Request("GET", url)

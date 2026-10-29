@@ -92,6 +92,39 @@ def test_file_with_bom_is_decoded(tmp_path: Path, raw: bytes) -> None:
     assert resolved.text == "Briefly reads files.\nLine two."
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "nope.txt",
+        "notes/meeting.md",
+        r"C:\Users\me\my notes.txt",
+        "report.pdf",
+        "example.com",
+    ],
+)
+def test_missing_file_path_raises_clear_error(raw: str) -> None:
+    with pytest.raises(ValueError, match="File not found"):
+        resolve_input_target(raw)
+
+
+def test_folder_path_raises_clear_error(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="Input is a folder, not a file"):
+        resolve_input_target(str(tmp_path))
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "Read the docs at notes.md",
+        "I love Python.",
+        "v1.2",
+        "First line\nsee notes.md",
+    ],
+)
+def test_text_that_mentions_a_file_stays_text(raw: str) -> None:
+    assert resolve_input_target(raw).kind == "text"
+
+
 def test_non_utf8_file_raises_clear_error(tmp_path: Path) -> None:
     source = tmp_path / "notes.txt"
     source.write_bytes("café".encode("latin-1"))

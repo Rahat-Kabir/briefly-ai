@@ -3,6 +3,7 @@ from __future__ import annotations
 import codecs
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Callable, Literal
 from urllib.parse import urlparse
 
@@ -10,6 +11,8 @@ from briefly_core.audio import is_supported_audio_path, is_supported_video_path
 from briefly_core.image import is_supported_image_path
 
 InputKind = Literal["text", "file", "stdin", "url", "pdf", "audio", "video", "image"]
+
+_FILE_EXTENSION_PATTERN = re.compile(r"\.[A-Za-z][A-Za-z0-9]{0,4}$")
 
 
 @dataclass(frozen=True)
@@ -44,7 +47,28 @@ def resolve_input_target(
             return ResolvedInput(kind="image", source=str(path), text=None)
         return ResolvedInput(kind="file", source=str(path), text=_read_text_file(path))
 
+    if path.is_dir():
+        raise ValueError(
+            f"Input is a folder, not a file: {raw_input}. Pass a file inside it, or "
+            f'to brief it as literal text, pipe it: echo "{raw_input}" | briefly -'
+        )
+
+    if _looks_like_file_path(raw_input):
+        raise ValueError(
+            f"File not found: {raw_input}. "
+            f'To brief it as literal text, pipe it: echo "{raw_input}" | briefly -'
+        )
+
     return ResolvedInput(kind="text", source="literal", text=raw_input)
+
+
+def _looks_like_file_path(raw_input: str) -> bool:
+    # A sentence that mentions a file ("Read notes.md") has spaces but no path
+    # separator, so it stays text.
+    if "\n" in raw_input or not _FILE_EXTENSION_PATTERN.search(raw_input):
+        return False
+    has_separator = "/" in raw_input or "\\" in raw_input
+    return has_separator or " " not in raw_input
 
 
 def _read_text_file(path: Path) -> str:

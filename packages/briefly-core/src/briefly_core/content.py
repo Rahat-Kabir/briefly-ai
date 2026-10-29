@@ -16,6 +16,9 @@ Fetcher = Callable[[str], Awaitable[httpx.Response]]
 ContentFormat = Literal["text", "markdown"]
 
 _DEFAULT_TIMEOUT_SECONDS = 15.0
+# Wikipedia rejects httpx's default and generic browser user agents but accepts
+# a descriptive one with a contact URL, as its bot policy asks.
+_USER_AGENT = "briefly-ai (+https://github.com/Rahat-Kabir/briefly-ai)"
 _WHITESPACE_PATTERN = re.compile(r"[ \t\r\f\v]+")
 _BLANK_LINES_PATTERN = re.compile(r"\n{3,}")
 
@@ -87,11 +90,8 @@ def extract_html_text(html: str, *, output_format: ContentFormat = "text") -> tu
 
 
 def _extract_trafilatura_text(html: str, *, output_format: ContentFormat = "text") -> str:
-    kwargs: dict[str, object] = {"include_comments": False}
-    if output_format == "markdown":
-        kwargs["output_format"] = "markdown"
-
-    text = trafilatura_extract(html, **kwargs)
+    trafilatura_format = "markdown" if output_format == "markdown" else "txt"
+    text = trafilatura_extract(html, include_comments=False, output_format=trafilatura_format)
     if not isinstance(text, str):
         return ""
     return _clean_block_text(text)
@@ -143,6 +143,7 @@ async def _fetch_url(url: str, fetcher: Fetcher | None) -> httpx.Response:
         async with httpx.AsyncClient(
             follow_redirects=True,
             timeout=_DEFAULT_TIMEOUT_SECONDS,
+            headers={"User-Agent": _USER_AGENT},
         ) as client:
             response = await client.get(url)
 
