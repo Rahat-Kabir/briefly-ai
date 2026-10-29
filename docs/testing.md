@@ -20,7 +20,7 @@ $env:UV_LINK_MODE='copy'
 Current expected baseline:
 
 ```text
-pytest: 223 passed
+pytest: 228 passed
 ruff: All checks passed
 ```
 
@@ -84,7 +84,11 @@ tests/
   separation.
 - Groq Whisper YouTube fallback with mocked audio download and API response,
   including oversized-audio errors and the 60s upload timeout override.
-- yt-dlp audio download arguments (32 kbps mono 16 kHz) via a fake subprocess.
+- yt-dlp audio download arguments (32 kbps mono 16 kHz) and the HTTP 403
+  update hint, via a fake subprocess.
+- Local media compression: small files skip ffmpeg, large files upload the
+  compressed temp file, ffmpeg arguments, missing ffmpeg, ffmpeg failure, and
+  the CLI error when audio is still too large after compression.
 - Local audio/video transcription with mocked Groq responses, including cache
   hit, mtime invalidation, skip-cache, missing key, and oversized file errors.
 - Local image extraction with a mocked vision LLM, including extension
@@ -109,7 +113,8 @@ tests/
 - URL and summary cache behavior, TTL, stats, and clear.
 - Summary cache separation by brief type.
 - Extract mode for literal text, local files, stdin, and URL placeholder errors.
-- Clean CLI error for non-UTF-8 local files.
+- UTF-16 LE/BE and UTF-8 BOM text files, and a clean CLI error for other
+  non-UTF-8 local files.
 - LiteLLM `timeout` and `num_retries` forwarded for briefing, streaming, and
   vision calls, and LiteLLM debug banners suppressed.
 - Config rejection of unsupported keys (core and CLI).

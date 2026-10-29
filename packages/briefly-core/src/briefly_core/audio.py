@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import tempfile
 from typing import Any
 
 import httpx
@@ -65,15 +67,6 @@ def validate_local_media_file(path: Path) -> None:
         supported = ", ".join(sorted(_SUPPORTED_MEDIA_EXTENSIONS))
         raise ValueError(f"Unsupported local media file type: {path.suffix}. Supported: {supported}")
 
-    size = path.stat().st_size
-    if size > LOCAL_MEDIA_UPLOAD_LIMIT_BYTES:
-        limit_mb = LOCAL_MEDIA_UPLOAD_LIMIT_BYTES // (1024 * 1024)
-        raise ValueError(
-            f"Local media file is too large for direct Groq upload: {path} "
-            f"({size} bytes, limit {limit_mb} MB). Audio extraction and chunking are not "
-            "implemented yet."
-        )
-
 
 async def transcribe_local_media_file(path: Path) -> TranscriptionResult:
     validate_local_media_file(path)
@@ -82,11 +75,50 @@ async def transcribe_local_media_file(path: Path) -> TranscriptionResult:
         raise RuntimeError("GROQ_API_KEY is required to transcribe local media with Groq.")
 
     async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT_SECONDS) as client:
-        return await transcribe_file_with_groq(
-            path,
-            api_key=api_key,
-            client=client,
+        if path.stat().st_size <= LOCAL_MEDIA_UPLOAD_LIMIT_BYTES:
+            return await transcribe_file_with_groq(path, api_key=api_key, client=client)
+
+        with tempfile.TemporaryDirectory(prefix="briefly-media-") as temp_dir:
+            compressed_path = await compress_media_for_transcription(path, Path(temp_dir))
+            return await transcribe_file_with_groq(
+                compressed_path,
+                api_key=api_key,
+                client=client,
+            )
+
+
+async def compress_media_for_transcription(path: Path, output_dir: Path) -> Path:
+    """Re-encode to 32 kbps mono 16 kHz MP3, the format Whisper uses internally."""
+    output_path = output_dir / f"{path.stem}.mp3"
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-nostdin",
+            "-v",
+            "error",
+            "-y",
+            "-i",
+            str(path),
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-b:a",
+            "32k",
+            str(output_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            "ffmpeg is required to shrink media over 25 MB before upload. Install ffmpeg."
+        ) from error
+    _, stderr = await process.communicate()
+    if process.returncode != 0:
+        error = stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"ffmpeg failed to compress {path.name}: {error or 'unknown error'}")
+    return output_path
 
 
 async def transcribe_file_with_groq(
@@ -101,7 +133,8 @@ async def transcribe_file_with_groq(
         limit_mb = LOCAL_MEDIA_UPLOAD_LIMIT_BYTES // (1024 * 1024)
         raise RuntimeError(
             f"Audio is too large for Groq upload: {size / (1024 * 1024):.1f} MB "
-            f"(limit {limit_mb} MB). Audio chunking is not implemented yet."
+            f"(limit {limit_mb} MB, about 1h45m of speech audio). Audio chunking is not "
+            "implemented yet."
         )
 
     selected_model = model or groq_transcription_model()

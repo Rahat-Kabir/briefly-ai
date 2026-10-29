@@ -384,6 +384,11 @@ async def _download_youtube_audio(url: str, output_dir: Path) -> Path:
     _, stderr = await process.communicate()
     if process.returncode != 0:
         error = stderr.decode("utf-8", errors="replace").strip()
+        if "HTTP Error 403" in error:
+            raise RuntimeError(
+                "YouTube blocked the yt-dlp download (HTTP 403). yt-dlp is probably "
+                "outdated: update it with `yt-dlp -U` (or your package manager) and try again."
+            )
         raise RuntimeError(error or "yt-dlp failed to download audio.")
 
     audio_files = sorted(path for path in output_dir.iterdir() if path.is_file())

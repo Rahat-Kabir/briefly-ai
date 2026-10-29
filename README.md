@@ -228,7 +228,9 @@ uv run briefly lecture.mp4 --extract
 Local media input sends supported files directly to Groq Whisper, caches the
 transcript, and uses that text for extract or briefing mode. Supported first
 slice: `.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`, `.mpeg`, `.mpga`, `.mp4`, and
-`.webm`. Files over the direct upload limit fail clearly until chunking exists.
+`.webm`. Files over Groq's 25 MB upload limit are first shrunk with `ffmpeg`
+into 32 kbps mono speech audio (about 1h45m fits), so install `ffmpeg` for long
+recordings. Anything still too large fails clearly until chunking exists.
 
 ### Brief a local image
 
@@ -275,7 +277,8 @@ Use `--timestamps` to print transcript lines with `[m:ss]` or `[h:mm:ss]`
 timestamps.
 
 If YouTube captions are missing, Briefly can fall back to Groq Whisper. Install
-`yt-dlp` and set `GROQ_API_KEY`:
+`yt-dlp` and set `GROQ_API_KEY`. If the download fails with HTTP 403, update
+yt-dlp with `yt-dlp -U` (or your package manager):
 
 ```powershell
 $env:GROQ_API_KEY='your_groq_api_key'

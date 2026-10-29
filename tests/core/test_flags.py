@@ -3,50 +3,20 @@ import pytest
 from briefly_core.flags import (
     LengthArg,
     parse_brief_type,
-    parse_duration_ms,
     parse_extract_format,
-    parse_firecrawl_mode,
     parse_length_arg,
-    parse_markdown_mode,
     parse_max_extract_characters,
     parse_max_output_tokens,
-    parse_metrics_mode,
-    parse_preprocess_mode,
-    parse_retries,
     parse_stream_mode,
-    parse_video_mode,
-    parse_youtube_mode,
 )
 
 
-def test_parses_youtube_mode() -> None:
-    assert parse_youtube_mode("auto") == "auto"
-    assert parse_youtube_mode("web") == "web"
-    assert parse_youtube_mode("apify") == "apify"
-    assert parse_youtube_mode("yt-dlp") == "yt-dlp"
-    assert parse_youtube_mode("no-auto") == "no-auto"
-    assert parse_youtube_mode("autp") == "auto"
-    with pytest.raises(ValueError, match="Unsupported --youtube"):
-        parse_youtube_mode("nope")
-
-
-def test_parses_timeout_durations() -> None:
-    assert parse_duration_ms("30") == 30_000
-    assert parse_duration_ms("30s") == 30_000
-    assert parse_duration_ms("2m") == 120_000
-    assert parse_duration_ms("500ms") == 500
-    assert parse_duration_ms("1.5s") == 1500
-    with pytest.raises(ValueError, match="Unsupported --timeout"):
-        parse_duration_ms("0")
-
-
-def test_parses_modes() -> None:
-    assert parse_firecrawl_mode("always") == "always"
-    assert parse_markdown_mode("readability") == "readability"
-    assert parse_preprocess_mode("on") == "always"
+def test_parses_stream_mode() -> None:
     assert parse_stream_mode("auto") == "auto"
-    assert parse_metrics_mode("detailed") == "detailed"
-    assert parse_video_mode("understand") == "understand"
+    assert parse_stream_mode("ON") == "on"
+    assert parse_stream_mode("off") == "off"
+    with pytest.raises(ValueError, match="Unsupported --stream"):
+        parse_stream_mode("nope")
 
 
 def test_parses_extract_format() -> None:
@@ -100,12 +70,3 @@ def test_parses_max_extract_characters() -> None:
         parse_max_extract_characters("5")
     with pytest.raises(ValueError, match="max-extract-characters"):
         parse_max_extract_characters("nope")
-
-
-def test_parses_retries() -> None:
-    assert parse_retries("0") == 0
-    assert parse_retries("5") == 5
-    with pytest.raises(ValueError, match="Unsupported --retries"):
-        parse_retries("6")
-    with pytest.raises(ValueError, match="Unsupported --retries"):
-        parse_retries("1.5")

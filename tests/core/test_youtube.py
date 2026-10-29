@@ -501,6 +501,28 @@ def test_download_youtube_audio_requests_low_bitrate_mono_speech_audio(
     assert args[args.index("--postprocessor-args") + 1] == "ExtractAudio:-ac 1 -ar 16000"
 
 
+def test_download_youtube_audio_suggests_update_on_http_403(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    class FakeProcess:
+        returncode = 1
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return b"", b"ERROR: unable to download video data: HTTP Error 403: Forbidden"
+
+    async def fake_exec(*args: str, **kwargs: object) -> FakeProcess:
+        return FakeProcess()
+
+    monkeypatch.setattr("briefly_core.youtube.asyncio.create_subprocess_exec", fake_exec)
+
+    with pytest.raises(RuntimeError, match=r"HTTP 403.*yt-dlp -U") as error_info:
+        asyncio.run(
+            _download_youtube_audio("https://www.youtube.com/watch?v=dQw4w9WgXcQ", tmp_path)
+        )
+    assert "Forbidden" not in str(error_info.value)
+
+
 def test_fetch_youtube_transcript_rejects_invalid_url() -> None:
     async def run() -> None:
         with pytest.raises(ValueError, match="Unsupported YouTube URL"):

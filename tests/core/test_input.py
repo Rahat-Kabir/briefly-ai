@@ -1,3 +1,4 @@
+import codecs
 from pathlib import Path
 
 import pytest
@@ -73,9 +74,27 @@ def test_resolves_video_file_without_reading(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "Briefly reads files.\r\nLine two.".encode("utf-16"),
+        codecs.BOM_UTF16_BE + "Briefly reads files.\r\nLine two.".encode("utf-16-be"),
+        codecs.BOM_UTF8 + "Briefly reads files.\r\nLine two.".encode("utf-8"),
+    ],
+    ids=["utf-16-le-bom", "utf-16-be-bom", "utf-8-bom"],
+)
+def test_file_with_bom_is_decoded(tmp_path: Path, raw: bytes) -> None:
+    source = tmp_path / "notes.txt"
+    source.write_bytes(raw)
+
+    resolved = resolve_input_target(str(source))
+
+    assert resolved.text == "Briefly reads files.\nLine two."
+
+
 def test_non_utf8_file_raises_clear_error(tmp_path: Path) -> None:
     source = tmp_path / "notes.txt"
-    source.write_text("hello", encoding="utf-16")
+    source.write_bytes("café".encode("latin-1"))
 
-    with pytest.raises(ValueError, match="File is not UTF-8 text"):
+    with pytest.raises(ValueError, match="File is not UTF-8 or UTF-16 text"):
         resolve_input_target(str(source))

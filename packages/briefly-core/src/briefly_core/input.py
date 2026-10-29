@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -41,16 +42,23 @@ def resolve_input_target(
             return ResolvedInput(kind="video", source=str(path), text=None)
         if is_supported_image_path(path):
             return ResolvedInput(kind="image", source=str(path), text=None)
-        try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError as error:
-            raise ValueError(
-                f"File is not UTF-8 text: {path}. "
-                "Save it as UTF-8 or use a supported file type."
-            ) from error
-        return ResolvedInput(kind="file", source=str(path), text=text)
+        return ResolvedInput(kind="file", source=str(path), text=_read_text_file(path))
 
     return ResolvedInput(kind="text", source="literal", text=raw_input)
+
+
+def _read_text_file(path: Path) -> str:
+    # UTF-16 is only detected by its BOM; Windows PowerShell 5.1 `>` writes UTF-16 LE with one.
+    with path.open("rb") as file:
+        head = file.read(2)
+    encoding = "utf-16" if head in (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE) else "utf-8-sig"
+    try:
+        return path.read_text(encoding=encoding)
+    except UnicodeDecodeError as error:
+        raise ValueError(
+            f"File is not UTF-8 or UTF-16 text: {path}. "
+            "Save it as UTF-8 or use a supported file type."
+        ) from error
 
 
 def _is_http_url(raw_input: str) -> bool:

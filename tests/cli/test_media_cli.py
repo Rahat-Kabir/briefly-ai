@@ -179,12 +179,25 @@ def test_local_media_missing_groq_key_errors(
     assert "GROQ_API_KEY is required" in result.stderr
 
 
-def test_local_media_oversized_file_errors(tmp_path: Path) -> None:
+def test_local_media_still_oversized_after_compression_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    async def fake_compress(path: Path, output_dir: Path) -> Path:
+        compressed_path = output_dir / "large.mp3"
+        with compressed_path.open("wb") as file:
+            file.truncate(LOCAL_MEDIA_UPLOAD_LIMIT_BYTES + 1)
+        return compressed_path
+
+    monkeypatch.setattr("briefly_core.audio.compress_media_for_transcription", fake_compress)
     media_path = tmp_path / "large.mp3"
     with media_path.open("wb") as file:
         file.truncate(LOCAL_MEDIA_UPLOAD_LIMIT_BYTES + 1)
 
-    result = runner.invoke(app, [str(media_path), "--extract"], color=False)
+    result = runner.invoke(app, [str(media_path), "--extract", "--skip-cache"], color=False)
 
     assert result.exit_code != 0
-    assert "too large for direct Groq upload" in result.stderr
+    assert "too large for Groq upload" in result.stderr
+    assert "Traceback" not in result.stderr

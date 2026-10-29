@@ -91,11 +91,11 @@ def test_url_extract_errors_are_clear(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_non_utf8_file_shows_clean_error() -> None:
     with runner.isolated_filesystem():
-        with open("notes.txt", "w", encoding="utf-16") as file:
-            file.write("Briefly reads files.")
+        with open("notes.txt", "w", encoding="latin-1") as file:
+            file.write("Briefly reads café files.")
 
         result = runner.invoke(app, ["notes.txt", "--extract"], color=False)
 
     assert result.exit_code == 1
-    assert "File is not UTF-8 text" in result.stderr
+    assert "File is not UTF-8 or UTF-16 text" in result.stderr
     assert "Traceback" not in result.stderr

@@ -125,8 +125,10 @@ The root briefing command resolves input before any briefing work starts.
 Current supported input kinds:
 
 - `-` reads text from stdin.
-- Existing local files are read as UTF-8 text. Non-UTF-8 files (for example
-  UTF-16 text or binary formats like `.docx`) fail with a clear CLI error.
+- Existing local files are read as UTF-8 text. A UTF-16 BOM (LE or BE)
+  switches to UTF-16, and a UTF-8 BOM is stripped. UTF-16 without a BOM is
+  not detected. Other files (for example Latin-1 text or binary formats like
+  `.docx`) fail with a clear CLI error.
 - Local audio/video files are transcribed when extraction or briefing needs
   text.
 - Local `.pdf` files are extracted with pdfplumber when extraction or briefing
@@ -180,7 +182,9 @@ to Groq Whisper:
 - Use `whisper-large-v3-turbo` by default.
 - `BRIEFLY_GROQ_WHISPER_MODEL` may override the Whisper model id.
 - Convert Groq segment timestamps into `CaptionSegment` values.
-- Fail clearly if the fallback is configured but `yt-dlp` or Groq fails.
+- Fail clearly if the fallback is configured but `yt-dlp` or Groq fails. A
+  yt-dlp `HTTP Error 403` (usually an outdated yt-dlp) is replaced with a
+  hint to run `yt-dlp -U` instead of the raw yt-dlp output.
 - The shared Groq upload helper enforces the 25 MB limit before reading the
   file and sets its own 60s request timeout, so the 15s YouTube client
   timeout does not apply to the upload. Videos over about 1h45m fail with a
@@ -237,8 +241,13 @@ Flow:
 - Supported direct-upload suffixes are `.mp3`, `.m4a`, `.wav`, `.ogg`,
   `.flac`, `.mpeg`, `.mpga`, `.mp4`, and `.webm`.
 - The CLI `_resolve_media_input` checks the media transcript cache first.
-- Cache misses require `GROQ_API_KEY`, enforce the direct upload size limit,
-  and POST the file to Groq's OpenAI-compatible transcription endpoint.
+- Cache misses require `GROQ_API_KEY` and POST the file to Groq's
+  OpenAI-compatible transcription endpoint.
+- Files over 25 MB are first re-encoded by `ffmpeg` into a temporary
+  32 kbps mono 16 kHz MP3 (`compress_media_for_transcription`, video track
+  dropped), the format Whisper uses internally. Files at or under 25 MB upload
+  as-is, so ffmpeg is only needed for large files. A missing ffmpeg or a
+  still-oversized result fails clearly.
 - `whisper-large-v3-turbo` is the default; `BRIEFLY_GROQ_WHISPER_MODEL` may
   override it.
 - `--extract` prints only the transcript. Normal briefing mode sends the
@@ -248,7 +257,7 @@ Cache uses `cache_kind="media_transcript"` with the absolute path as the key
 and `text:<mtime_ns>:<size>:<model>` as the format slot, so edits and model
 changes invalidate the transcript cache.
 
-Large-file audio extraction, chunking, timestamps, speaker labels, and batch
+Chunking for media over about 1h45m, timestamps, speaker labels, and batch
 transcription are deferred.
 
 ## Local Images

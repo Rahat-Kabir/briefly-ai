@@ -15,8 +15,8 @@ Planned:
 
 - Chunked map-reduce briefing for long resolved text, benefiting all input
   kinds (long PDFs, articles, transcripts).
-- Media chunking to lift the 25 MB Groq upload limit; likely requires ffmpeg
-  as an external dependency (yt-dlp-style error when missing) — not decided.
+- Media chunking for files over about 1h45m (still too large after the
+  ffmpeg shrink). Reuse the existing ffmpeg dependency to split audio.
 - Vision fallback for remote/URL scanned PDFs (may move into v0.2.0).
 
 Deferred: slides/docx extraction, daemon, non-Groq transcription, batch
@@ -90,6 +90,17 @@ Completed:
 - YouTube Whisper fallback now downloads 32 kbps mono 16 kHz MP3, the format
   Whisper uses internally, so videos up to about 1h45m fit Groq's 25 MB limit
   instead of about 26 minutes.
+- yt-dlp HTTP 403 errors now tell the user to update yt-dlp (`yt-dlp -U`)
+  instead of printing raw yt-dlp output.
+- Local media over 25 MB is shrunk with `ffmpeg` to 32 kbps mono 16 kHz MP3
+  before upload, so local recordings up to about 1h45m work. ffmpeg is only
+  required for files over 25 MB.
+- Local text files with a UTF-16 BOM (Windows PowerShell 5.1 `>` output) are
+  now read; a UTF-8 BOM is stripped instead of leaking into the text.
+- Removed unused flag parsers and their types from `briefly_core.flags` and
+  the `briefly_core` exports (`--youtube`, `--firecrawl`, `--markdown-mode`,
+  `--preprocess`, `--metrics`, `--video-mode`, `--timeout`, `--retries`). No
+  CLI option ever used them.
 
 Possible before release:
 
@@ -99,7 +110,7 @@ Possible before release:
 
 Not built yet:
 
-- Audio extraction or chunking for large media.
+- Chunking for media over about 1h45m.
 - Speaker labels, timestamps, subtitles, or batch transcription.
 - Non-Groq transcription providers.
 
